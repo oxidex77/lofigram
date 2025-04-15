@@ -21,30 +21,230 @@ export const pageTransition = {
         }
     }
 };
-
+export const smoothPageTransition = {
+    initial: { 
+      opacity: 0,
+      scale: 0.98
+    },
+    animate: { 
+      opacity: 1, 
+      scale: 1,
+      transition: { 
+        duration: 0.4, 
+        ease: [0.25, 0.1, 0.25, 1.0], // Cubic bezier for natural motion
+        when: "beforeChildren"
+      }
+    },
+    exit: { 
+      opacity: 0,
+      scale: 1.02,
+      transition: { 
+        duration: 0.3, 
+        ease: [0.25, 0.1, 0.25, 1.0]
+      }
+    }
+  };
+  
+  // Smooth fade transition
+  export const fadeTransition = {
+    initial: { 
+      opacity: 0 
+    },
+    animate: { 
+      opacity: 1,
+      transition: { 
+        duration: 0.5,
+        ease: "easeInOut"
+      }
+    },
+    exit: { 
+      opacity: 0,
+      transition: { 
+        duration: 0.3,
+        ease: "easeInOut" 
+      }
+    }
+  };
+  
+  // Slide up transition
+  export const slideUpTransition = {
+    initial: { 
+      opacity: 0,
+      y: 20 
+    },
+    animate: { 
+      opacity: 1,
+      y: 0,
+      transition: { 
+        duration: 0.4, 
+        ease: [0.25, 0.1, 0.25, 1.0]
+      }
+    },
+    exit: { 
+      opacity: 0,
+      y: -20,
+      transition: { 
+        duration: 0.3, 
+        ease: [0.25, 0.1, 0.25, 1.0]
+      }
+    }
+  };
+  
+  // Staggered children container animation
+  export const staggerContainer = {
+    initial: { 
+      opacity: 0 
+    },
+    animate: { 
+      opacity: 1,
+      transition: {
+        when: "beforeChildren",
+        staggerChildren: 0.07,
+        delayChildren: 0.1
+      }
+    },
+    exit: { 
+      opacity: 0,
+      transition: {
+        when: "afterChildren",
+        staggerChildren: 0.05,
+        staggerDirection: -1
+      }
+    }
+  };
+  
+  // Child item animation
+  export const staggerItem = {
+    initial: { 
+      y: 15, 
+      opacity: 0 
+    },
+    animate: { 
+      y: 0, 
+      opacity: 1,
+      transition: {
+        duration: 0.4,
+        ease: [0.25, 0.1, 0.25, 1.0]
+      }
+    },
+    exit: { 
+      y: 15, 
+      opacity: 0,
+      transition: {
+        duration: 0.3,
+        ease: [0.25, 0.1, 0.25, 1.0]
+      }
+    }
+  };
+  
+  // Smooth tab transitions
+  export const tabTransition = {
+    initial: { 
+      opacity: 0,
+      x: 10 
+    },
+    animate: { 
+      opacity: 1,
+      x: 0,
+      transition: { 
+        duration: 0.3, 
+        ease: [0.25, 0.1, 0.25, 1.0]
+      }
+    },
+    exit: { 
+      opacity: 0,
+      x: -10,
+      transition: { 
+        duration: 0.2, 
+        ease: [0.25, 0.1, 0.25, 1.0]
+      }
+    }
+  };
+  
+  // Player screen transitions
+  export const playerTransition = {
+    initial: { 
+      opacity: 0,
+      y: 20
+    },
+    animate: { 
+      opacity: 1,
+      y: 0,
+      transition: { 
+        duration: 0.4, 
+        ease: [0.25, 0.1, 0.25, 1.0]
+      }
+    },
+    exit: { 
+      opacity: 0,
+      y: 20,
+      transition: { 
+        duration: 0.3, 
+        ease: [0.25, 0.1, 0.25, 1.0]
+      }
+    }
+  };
+  
+  // Mini player slide up transition
+  export const miniPlayerTransition = {
+    initial: { 
+      y: 100, 
+      opacity: 0 
+    },
+    animate: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        type: "spring", 
+        stiffness: 400, 
+        damping: 30 
+      }
+    },
+    exit: { 
+      y: 100, 
+      opacity: 0,
+      transition: { 
+        duration: 0.2, 
+        ease: "easeIn" 
+      }
+    }
+  };
+  
+  // Modal slide up from bottom
+  export const modalTransition = {
+    initial: { 
+      y: 50, 
+      opacity: 0 
+    },
+    animate: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        type: "spring", 
+        stiffness: 400, 
+        damping: 30 
+      }
+    },
+    exit: { 
+      y: 50, 
+      opacity: 0,
+      transition: { 
+        duration: 0.2, 
+        ease: "easeIn" 
+      }
+    }
+  };
 // Staggered children animations
-export const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1,
-            delayChildren: 0.2
-        }
-    }
-};
-
-export const staggerItem = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.5,
-            ease: "easeOut"
-        }
-    }
-};
+// export const staggerContainer = {
+//     hidden: { opacity: 0 },
+//     visible: {
+//         opacity: 1,
+//         transition: {
+//             staggerChildren: 0.1,
+//             delayChildren: 0.2
+//         }
+//     }
+// };
 
 // Loading animations
 export const loadingPulse = {

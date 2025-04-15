@@ -81,7 +81,7 @@ const HomeScreen = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <motion.img 
-              src="/assets/characters/mascot1.png" 
+              src="/assets/characters/rainy.png" 
               alt="Mascot" 
               className="w-14 h-14 object-contain mr-3 hidden sm:block"
               whileHover={{ scale: 1.1, rotate: [0, -5, 0, 5, 0] }}
@@ -98,7 +98,7 @@ const HomeScreen = () => {
           </div>
           <div className="flex items-center">
             <motion.img 
-              src="/assets/characters/mascot2.png" 
+              src="/assets/characters/rainy.png" 
               alt="Mascot" 
               className="w-12 h-12 object-contain mr-3 hidden sm:block"
               animate={{ y: [0, -3, 0] }}
@@ -179,7 +179,7 @@ const HomeScreen = () => {
         transition={{ delay: 1 }}
       >
         <motion.img
-          src="/assets/characters/mascot2.png"
+          src="/assets/characters/rainy.png"
           alt="Decorative Mascot"
           className="w-full h-full object-contain"
           animate={{ y: [0, -5, 0] }}

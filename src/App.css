@@ -177,3 +177,255 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: 0 0 40px rgba(219, 39, 119, 0.05);
   }
 }
+
+/* Mobile Optimization - Add to src/App.css */
+
+/* Optimize for mobile performance */
+@media (max-width: 768px) {
+  /* Reduce animation complexity for better performance */
+  .reduce-motion * {
+    transition-duration: 0.2s !important;
+    animation-duration: 0.3s !important;
+  }
+  
+  /* Optional class to hide animations on low-end devices */
+  .reduce-motion .subtle-animation {
+    animation: none !important;
+  }
+  
+  /* Optimize image loading */
+  img {
+    content-visibility: auto;
+  }
+  
+  /* Hardware acceleration for fixed position elements */
+  .fixed {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  
+  /* Larger touch targets for better mobile usability */
+  button, 
+  [role="button"],
+  a {
+    min-height: 36px;
+    min-width: 36px;
+  }
+  
+  /* Prevent long-running animations on mobile */
+  @media (prefers-reduced-motion), (update: slow) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  
+  /* Optimize layout containment */
+  .layout-container {
+    contain: layout;
+  }
+  
+  /* Optimize paint operations */
+  .paint-container {
+    contain: paint;
+  }
+  
+  /* Improve tap feedback */
+  button:active {
+    transform: scale(0.96);
+  }
+}
+
+/* Ensure elements don't get cut off in small screens */
+.no-overflow-container {
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.content-container {
+  max-height: calc(100vh - 130px); /* Adjust based on your header + footer heights */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for mini-player on smaller screens */
+.mini-player-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+}
+
+/* More efficient background gradients for mobile */
+.lite-gradient {
+  background-image: none !important;
+}
+
+@media (min-width: 769px) {
+  .lite-gradient {
+    background-image: var(--gradient) !important;
+  }
+}
+
+/* Optimize scroll performance */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Force GPU acceleration for smoother transitions */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Add these styles to src/App.css for better transitions and animations */
+
+/* Smooth transitions */
+.page-transition {
+  transition: opacity 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+/* Enhanced background gradients */
+.enhanced-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Force hardware acceleration for smoother animations */
+.hardware-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Better blurs and glass effects */
+.glass-effect {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glass-effect-dark {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(30, 30, 46, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading animations */
+.loading-cat {
+  position: relative;
+  z-index: 10;
+}
+
+.loading-cat::before {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  filter: blur(3px);
+}
+
+/* Smooth screen transitions */
+.screen-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.screen-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 400ms, transform 400ms cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+.screen-transition-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.screen-transition-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 300ms, transform 300ms cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+/* Enhanced minimal styling for low-end devices */
+.minimal-animations * {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+.minimal-animations .decorative-animation {
+  display: none !important;
+}
+
+/* Better focus styles for accessibility */
+:focus {
+  outline: 2px solid rgba(168, 85, 247, 0.5);
+  outline-offset: 2px;
+}
+
+/* Better tap highlights for mobile */
+@media (max-width: 768px) {
+  a:active, button:active, [role="button"]:active {
+    background-color: rgba(168, 85, 247, 0.1);
+  }
+}
+
+/* Optimized animations */
+.optimized-animation {
+  will-change: transform, opacity;
+}
+
+/* Soft shadow for depth */
+.shadow-soft {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
+               0 8px 10px -6px rgba(0, 0, 0, 0.01);
+}
+
+/* Kawaii-specific styles */
+.kawaii-shadow {
+  box-shadow: 0 8px 20px rgba(219, 39, 119, 0.15);
+}
+
+.kawaii-glow {
+  filter: drop-shadow(0 0 8px rgba(236, 72, 153, 0.5));
+}
+
+/* Font display optimization */
+@font-face {
+  font-family: 'Concert One';
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  font-display: swap;
+}

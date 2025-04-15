@@ -1,5 +1,5 @@
 // src/components/player/MiniPlayer.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { useApp } from '../../contexts/AppContext';
@@ -10,6 +10,19 @@ const MiniPlayer = () => {
   const { currentSong, isPlaying, togglePlay, currentTime, duration, formatTime } = usePlayer();
   const { maximizePlayer, theme } = useApp();
   const { isSongLiked, toggleLikeSong } = useUser();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile devices for optimization
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (!currentSong) return null;
 
@@ -18,30 +31,30 @@ const MiniPlayer = () => {
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
   const getBackground = () => {
-    if (theme === 'night') return 'bg-gray-900 bg-opacity-90';
+    if (theme === 'night' || theme === 'dark') return 'bg-gray-900 bg-opacity-90';
     return 'bg-white bg-opacity-90';
   };
 
   const getTextColor = () => {
-    if (theme === 'night') return 'text-purple-300';
+    if (theme === 'night' || theme === 'dark') return 'text-purple-300';
     return 'text-purple-800';
   };
 
   const getSubTextColor = () => {
-    if (theme === 'night') return 'text-gray-400';
+    if (theme === 'night' || theme === 'dark') return 'text-gray-400';
     return 'text-gray-600';
   };
 
   return (
     <motion.div 
-      className={`fixed bottom-0 left-0 right-0 ${getBackground()} backdrop-filter backdrop-blur-lg shadow-lg z-30 p-3 pb-6`}
+      className={`fixed bottom-0 left-0 right-0 ${getBackground()} backdrop-filter backdrop-blur-lg shadow-lg z-30 p-2 ${isMobile ? 'pb-4' : 'pb-6'}`}
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", damping: 20 }}
       onClick={maximizePlayer}
     >
       {/* Progress bar */}
-      <div className={`absolute top-0 left-0 right-0 h-1 ${theme === 'night' ? 'bg-gray-800' : 'bg-gray-200'}`}>
+      <div className={`absolute top-0 left-0 right-0 h-1 ${theme === 'night' || theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`}>
         <motion.div 
           className="h-full bg-gradient-to-r from-pink-400 to-purple-500"
           initial={{ width: '0%' }}
@@ -51,35 +64,36 @@ const MiniPlayer = () => {
       </div>
 
       <div className="flex items-center">
-        {/* Album cover with animated wave overlay */}
+        {/* Album cover with larger tap target on mobile */}
         <div className="relative mr-3">
           <motion.div
-            className="w-12 h-12 rounded-lg overflow-hidden shadow-md"
-            whileHover={{ scale: 1.05 }}
+            className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} rounded-lg overflow-hidden shadow-md`}
+            whileTap={{ scale: 0.95 }}
           >
             <img 
               src={currentSong.cover} 
               alt={currentSong.title} 
-              className={`w-full h-full object-cover ${isPlaying ? 'pulse-subtle' : ''}`}
+              className="w-full h-full object-cover"
+              loading="lazy"
             />
             
-            {/* Music wave animation */}
+            {/* Simplified wave animation for mobile */}
             {isPlaying && (
-              <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-t from-black/50 to-transparent flex justify-center items-end py-0.5">
+              <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? 'h-2' : 'h-3'} bg-gradient-to-t from-black/50 to-transparent flex justify-center items-end py-0.5`}>
                 <div className="flex items-end space-x-0.5">
-                  {[1, 2, 3, 4].map(i => (
+                  {[...(isMobile ? [1, 2, 3] : [1, 2, 3, 4])].map(i => (
                     <motion.div
                       key={i}
                       className="w-0.5 bg-white rounded-full"
                       animate={{
                         height: [
                           `${20 + Math.sin(i * 0.8) * 10}%`,
-                          `${70 + Math.sin(i * 0.8) * 20}%`,
+                          `${70 + Math.sin(i * 0.8) * 15}%`,
                           `${20 + Math.sin(i * 0.8) * 10}%`
                         ]
                       }}
                       transition={{
-                        duration: 1,
+                        duration: isMobile ? 1.5 : 1,
                         repeat: Infinity,
                         delay: i * 0.1
                       }}
@@ -91,7 +105,7 @@ const MiniPlayer = () => {
           </motion.div>
         </div>
 
-        {/* Song info */}
+        {/* Song info - simplified for mobile */}
         <div className="flex-grow min-w-0">
           <h3 className={`text-sm font-semibold truncate ${getTextColor()}`}>
             {currentSong.title}
@@ -101,16 +115,18 @@ const MiniPlayer = () => {
           </p>
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center space-x-3">
-          {/* Time */}
-          <div className={`text-xs ${getSubTextColor()} mr-1 hidden sm:block`}>
-            {formatTime(currentTime)}/{formatTime(duration)}
-          </div>
+        {/* Controls - more compact layout for mobile */}
+        <div className="flex items-center">
+          {/* Time on desktop only */}
+          {!isMobile && (
+            <div className={`text-xs ${getSubTextColor()} mr-2 hidden sm:block`}>
+              {formatTime(currentTime)}/{formatTime(duration)}
+            </div>
+          )}
           
           {/* Like button */}
           <motion.button
-            className="p-1.5"
+            className={isMobile ? "p-1 mx-0.5" : "p-1.5 mx-1"}
             onClick={(e) => {
               e.stopPropagation();
               toggleLikeSong(currentSong.id);
@@ -128,9 +144,9 @@ const MiniPlayer = () => {
             )}
           </motion.button>
           
-          {/* Play/Pause button */}
+          {/* Play/Pause button - slightly larger on mobile for easier tapping */}
           <motion.button
-            className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-400 to-purple-500 text-white flex items-center justify-center shadow-md"
+            className={`${isMobile ? 'w-9 h-9' : 'w-10 h-10'} rounded-full bg-gradient-to-r from-pink-400 to-purple-500 text-white flex items-center justify-center shadow-md mx-1`}
             onClick={(e) => {
               e.stopPropagation();
               togglePlay();
@@ -148,16 +164,18 @@ const MiniPlayer = () => {
             )}
           </motion.button>
           
-          {/* Maximize button for desktop */}
-          <motion.button
-            className="p-1.5 hidden sm:block"
-            onClick={maximizePlayer}
-            whileTap={{ scale: 0.9 }}
-          >
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-            </svg>
-          </motion.button>
+          {/* Maximize button for desktop only */}
+          {!isMobile && (
+            <motion.button
+              className="p-1.5 hidden sm:block"
+              onClick={maximizePlayer}
+              whileTap={{ scale: 0.9 }}
+            >
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+            </motion.button>
+          )}
         </div>
       </div>
     </motion.div>
