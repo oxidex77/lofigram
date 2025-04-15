@@ -1,11 +1,14 @@
 // src/components/screens/PlayerScreen.jsx
-import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
+// Full updated version with enhancements
+
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { useApp } from '../../contexts/AppContext';
 import { useUser } from '../../contexts/UserContext';
 import { getArtistById, getAlbumById } from '../../../src/mockMusicData';
-import { pageTransition, albumRotation, floatingAnimation, glowPulse } from '../../animations/animations';
+import { pageTransition, floatingAnimation, glowPulse } from '../../animations/animations';
+import ThemeToggle from '../player/ThemeToggle';
 
 const PlayerScreen = () => {
   const { 
@@ -22,8 +25,27 @@ const PlayerScreen = () => {
     setVolume
   } = usePlayer();
   
-  const { minimizePlayer } = useApp();
+  const { minimizePlayer, theme } = useApp();
   const { isSongLiked, toggleLikeSong } = useUser();
+  const [showVisualizer, setShowVisualizer] = useState(true);
+
+  // Visualizer elements
+  const barCount = 10;
+  const [barHeights, setBarHeights] = useState(Array(barCount).fill(20));
+
+  // Update visualizer if playing
+  useEffect(() => {
+    let interval;
+    if (isPlaying && showVisualizer) {
+      interval = setInterval(() => {
+        setBarHeights(Array(barCount).fill(0).map(() => 
+          Math.floor(Math.random() * 60) + 20
+        ));
+      }, 200);
+    }
+
+    return () => clearInterval(interval);
+  }, [isPlaying, showVisualizer, barCount]);
 
   useEffect(() => {
     // Enable swipe gestures for next/previous
@@ -54,9 +76,31 @@ const PlayerScreen = () => {
     seek(seekPosition);
   };
 
+  // Get background based on theme
+  const getThemeBackground = () => {
+    switch (theme) {
+      case 'night':
+        return "bg-gradient-to-br from-indigo-900 to-purple-900";
+      case 'cozy':
+        return "bg-gradient-to-br from-amber-100 to-orange-200";
+      case 'beach':
+        return "bg-gradient-to-br from-blue-100 to-cyan-200";
+      default:
+        return "bg-gradient-to-br from-pink-100 to-purple-200";
+    }
+  };
+
+  const getThemeTextColor = () => {
+    return theme === 'night' ? "text-gray-100" : "text-purple-800";
+  };
+  
+  const getThemeSecondaryColor = () => {
+    return theme === 'night' ? "text-gray-300" : "text-purple-600";
+  };
+
   return (
     <motion.div 
-      className="fixed inset-0 bg-gradient-to-br from-pink-100 to-purple-200 z-50 flex flex-col"
+      className={`fixed inset-0 ${getThemeBackground()} z-50 flex flex-col`}
       variants={pageTransition}
       initial="hidden"
       animate="visible"
@@ -64,14 +108,14 @@ const PlayerScreen = () => {
     >
       {/* Background decorative elements */}
       <motion.div 
-        className="absolute top-10 left-10 w-40 h-40 bg-pink-300 rounded-full blur-3xl opacity-20"
+        className={`absolute top-10 left-10 w-40 h-40 ${theme === 'night' ? 'bg-indigo-500' : 'bg-pink-300'} rounded-full blur-3xl opacity-20`}
         variants={floatingAnimation}
         initial="initial"
         animate="animate"
         custom={1.5}
       />
       <motion.div 
-        className="absolute bottom-20 right-10 w-60 h-60 bg-purple-300 rounded-full blur-3xl opacity-20"
+        className={`absolute bottom-20 right-10 w-60 h-60 ${theme === 'night' ? 'bg-violet-500' : 'bg-purple-300'} rounded-full blur-3xl opacity-20`}
         variants={floatingAnimation}
         initial="initial"
         animate="animate"
@@ -81,7 +125,7 @@ const PlayerScreen = () => {
       {/* Header */}
       <div className="relative z-10 p-6">
         <button 
-          className="p-2 -ml-2 text-purple-700"
+          className={`p-2 -ml-2 ${theme === 'night' ? 'text-gray-300' : 'text-purple-700'}`}
           onClick={minimizePlayer}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,12 +136,7 @@ const PlayerScreen = () => {
 
       {/* Album Cover */}
       <div className="flex-grow flex flex-col items-center justify-center px-6 relative z-10">
-        <motion.div
-          className="relative"
-          variants={isPlaying ? albumRotation : {}}
-          initial="initial"
-          animate={isPlaying ? "animate" : "paused"}
-        >
+        <motion.div className="relative">
           <motion.div 
             className="w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden shadow-xl m-auto relative"
             variants={glowPulse}
@@ -109,13 +148,16 @@ const PlayerScreen = () => {
               alt={currentSong.title} 
               className="w-full h-full object-cover"
             />
+            
+            {/* Overlay for visual effect */}
+            <div className={`absolute inset-0 ${theme === 'night' ? 'bg-indigo-900/20' : 'bg-pink-500/10'} rounded-2xl`} />
           </motion.div>
 
           {/* Floating notes */}
           {isPlaying && (
             <>
               <motion.div 
-                className="absolute -top-4 -right-4 text-purple-500 text-xl"
+                className={`absolute -top-4 -right-4 ${theme === 'night' ? 'text-indigo-400' : 'text-purple-500'} text-xl`}
                 variants={floatingAnimation}
                 initial="initial"
                 animate="animate"
@@ -124,7 +166,7 @@ const PlayerScreen = () => {
                 ♪
               </motion.div>
               <motion.div 
-                className="absolute top-1/4 -right-6 text-pink-500 text-2xl"
+                className={`absolute top-1/4 -right-6 ${theme === 'night' ? 'text-violet-400' : 'text-pink-500'} text-2xl`}
                 variants={floatingAnimation}
                 initial="initial"
                 animate="animate"
@@ -133,7 +175,7 @@ const PlayerScreen = () => {
                 ♫
               </motion.div>
               <motion.div 
-                className="absolute -bottom-2 -left-4 text-purple-500 text-xl"
+                className={`absolute -bottom-2 -left-4 ${theme === 'night' ? 'text-indigo-400' : 'text-purple-500'} text-xl`}
                 variants={floatingAnimation}
                 initial="initial"
                 animate="animate"
@@ -145,12 +187,27 @@ const PlayerScreen = () => {
           )}
         </motion.div>
 
+        {/* Audio Visualizer */}
+        {isPlaying && showVisualizer && (
+          <div className="flex items-end space-x-1 h-12 mt-4">
+            {barHeights.map((height, index) => (
+              <motion.div 
+                key={index}
+                className={`w-1 ${theme === 'night' ? 'bg-indigo-400' : 'bg-purple-400'} rounded-full`}
+                initial={{ height: 0 }}
+                animate={{ height: `${height}%` }}
+                transition={{ duration: 0.2 }}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Song Info */}
         <div className="text-center mt-8">
-          <h2 className="text-2xl font-bold text-purple-800">
+          <h2 className={`text-2xl font-bold ${getThemeTextColor()}`}>
             {currentSong.title}
           </h2>
-          <p className="text-purple-600 mt-1">
+          <p className={`${getThemeSecondaryColor()} mt-1`}>
             {artist?.name || 'Unknown Artist'} • {album?.title || 'Unknown Album'}
           </p>
         </div>
@@ -160,7 +217,7 @@ const PlayerScreen = () => {
       <div className="relative z-10 px-6 pb-10">
         {/* Progress Bar */}
         <div 
-          className="h-1 bg-gray-200 rounded-full mb-2 cursor-pointer"
+          className={`h-1 ${theme === 'night' ? 'bg-gray-700' : 'bg-gray-200'} rounded-full mb-2 cursor-pointer`}
           onClick={handleSeek}
         >
           <motion.div 
@@ -173,8 +230,8 @@ const PlayerScreen = () => {
         
         {/* Time Display */}
         <div className="flex justify-between text-xs text-gray-600 mb-6">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+          <span className={theme === 'night' ? 'text-gray-400' : ''}>{formatTime(currentTime)}</span>
+          <span className={theme === 'night' ? 'text-gray-400' : ''}>{formatTime(duration)}</span>
         </div>
         
         {/* Main Controls */}
@@ -198,11 +255,11 @@ const PlayerScreen = () => {
           
           {/* Previous Button */}
           <motion.button
-            className="p-2"
+            className={`p-2 ${theme === 'night' ? 'text-gray-300' : 'text-purple-700'}`}
             onClick={previous}
             whileTap={{ scale: 0.9 }}
           >
-            <svg className="w-8 h-8 text-purple-700" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
           </motion.button>
@@ -226,38 +283,31 @@ const PlayerScreen = () => {
           
           {/* Next Button */}
           <motion.button
-            className="p-2"
+            className={`p-2 ${theme === 'night' ? 'text-gray-300' : 'text-purple-700'}`}
             onClick={next}
             whileTap={{ scale: 0.9 }}
           >
-            <svg className="w-8 h-8 text-purple-700" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
               <path fillRule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
           </motion.button>
           
-          {/* Add to Playlist Button */}
+          {/* Toggle Visualizer Button */}
           <motion.button
-            className="p-2"
-            onClick={() => {
-              minimizePlayer();
-              setTimeout(() => {
-                // Use context directly rather than dynamic import
-                const { togglePlaylistModal } = useApp();
-                togglePlaylistModal(currentSong.id);
-              }, 300);
-            }}
+            className="p-2 text-gray-500"
+            onClick={() => setShowVisualizer(!showVisualizer)}
             whileTap={{ scale: 0.9 }}
           >
-            <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </motion.button>
         </div>
         
         {/* Volume Slider */}
         <div className="flex items-center mt-5">
-          <svg className="w-5 h-5 text-gray-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <svg className={`w-5 h-5 ${theme === 'night' ? 'text-gray-400' : 'text-gray-500'} mr-2`} fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
           </svg>
           <input
@@ -267,12 +317,15 @@ const PlayerScreen = () => {
             step="0.01"
             value={volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            className={`w-full h-1 ${theme === 'night' ? 'bg-gray-700' : 'bg-gray-200'} rounded-lg appearance-none cursor-pointer`}
           />
-          <svg className="w-5 h-5 text-gray-500 ml-2" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z" clipRule="evenodd" />
+          <svg className={`w-5 h-5 ${theme === 'night' ? 'text-gray-400' : 'text-gray-500'} ml-2`} fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071a1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </div>
+        
+        {/* Theme Toggle */}
+        <ThemeToggle />
       </div>
     </motion.div>
   );

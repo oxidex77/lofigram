@@ -5,11 +5,10 @@ import { usePlayer } from '../../contexts/PlayerContext';
 import { useApp } from '../../contexts/AppContext';
 import { useUser } from '../../contexts/UserContext';
 import { getArtistById } from '../../../src/mockMusicData';
-import { musicWave } from '../../animations/animations';
 
 const MiniPlayer = () => {
   const { currentSong, isPlaying, togglePlay, currentTime, duration, formatTime } = usePlayer();
-  const { maximizePlayer } = useApp();
+  const { maximizePlayer, theme } = useApp();
   const { isSongLiked, toggleLikeSong } = useUser();
 
   if (!currentSong) return null;
@@ -18,16 +17,31 @@ const MiniPlayer = () => {
   const isLiked = isSongLiked(currentSong.id);
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
+  const getBackground = () => {
+    if (theme === 'night') return 'bg-gray-900 bg-opacity-90';
+    return 'bg-white bg-opacity-90';
+  };
+
+  const getTextColor = () => {
+    if (theme === 'night') return 'text-purple-300';
+    return 'text-purple-800';
+  };
+
+  const getSubTextColor = () => {
+    if (theme === 'night') return 'text-gray-400';
+    return 'text-gray-600';
+  };
+
   return (
     <motion.div 
-      className="fixed bottom-0 left-0 right-0 bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg shadow-lg z-30 p-3 pb-6"
+      className={`fixed bottom-0 left-0 right-0 ${getBackground()} backdrop-filter backdrop-blur-lg shadow-lg z-30 p-3 pb-6`}
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", damping: 20 }}
       onClick={maximizePlayer}
     >
       {/* Progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gray-200">
+      <div className={`absolute top-0 left-0 right-0 h-1 ${theme === 'night' ? 'bg-gray-800' : 'bg-gray-200'}`}>
         <motion.div 
           className="h-full bg-gradient-to-r from-pink-400 to-purple-500"
           initial={{ width: '0%' }}
@@ -37,7 +51,7 @@ const MiniPlayer = () => {
       </div>
 
       <div className="flex items-center">
-        {/* Album cover and music waves animation */}
+        {/* Album cover with animated wave overlay */}
         <div className="relative mr-3">
           <motion.div
             className="w-12 h-12 rounded-lg overflow-hidden shadow-md"
@@ -46,33 +60,43 @@ const MiniPlayer = () => {
             <img 
               src={currentSong.cover} 
               alt={currentSong.title} 
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${isPlaying ? 'pulse-subtle' : ''}`}
             />
+            
+            {/* Music wave animation */}
+            {isPlaying && (
+              <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-t from-black/50 to-transparent flex justify-center items-end py-0.5">
+                <div className="flex items-end space-x-0.5">
+                  {[1, 2, 3, 4].map(i => (
+                    <motion.div
+                      key={i}
+                      className="w-0.5 bg-white rounded-full"
+                      animate={{
+                        height: [
+                          `${20 + Math.sin(i * 0.8) * 10}%`,
+                          `${70 + Math.sin(i * 0.8) * 20}%`,
+                          `${20 + Math.sin(i * 0.8) * 10}%`
+                        ]
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        delay: i * 0.1
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
-          
-          {/* Music wave animation */}
-          {isPlaying && (
-            <div className="absolute -top-3 left-0 right-0 flex justify-center space-x-1">
-              {[0, 1, 2].map(i => (
-                <motion.div
-                  key={i}
-                  className="w-1 bg-purple-500 rounded-full"
-                  custom={i * 0.2}
-                  variants={musicWave}
-                  initial="initial"
-                  animate="animate"
-                />
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Song info */}
         <div className="flex-grow min-w-0">
-          <h3 className="text-sm font-semibold text-purple-800 truncate">
+          <h3 className={`text-sm font-semibold truncate ${getTextColor()}`}>
             {currentSong.title}
           </h3>
-          <p className="text-xs text-gray-600 truncate">
+          <p className={`text-xs ${getSubTextColor()} truncate`}>
             {artist?.name || 'Unknown Artist'}
           </p>
         </div>
@@ -80,7 +104,7 @@ const MiniPlayer = () => {
         {/* Controls */}
         <div className="flex items-center space-x-3">
           {/* Time */}
-          <div className="text-xs text-gray-500 mr-1 hidden sm:block">
+          <div className={`text-xs ${getSubTextColor()} mr-1 hidden sm:block`}>
             {formatTime(currentTime)}/{formatTime(duration)}
           </div>
           
@@ -122,6 +146,17 @@ const MiniPlayer = () => {
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
               </svg>
             )}
+          </motion.button>
+          
+          {/* Maximize button for desktop */}
+          <motion.button
+            className="p-1.5 hidden sm:block"
+            onClick={maximizePlayer}
+            whileTap={{ scale: 0.9 }}
+          >
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
           </motion.button>
         </div>
       </div>

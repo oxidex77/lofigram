@@ -54,6 +54,39 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 0 2px 0 #555;
 }
 
+/* Dark theme overrides */
+.dark-theme {
+  color: #e0e0e0;
+}
+
+.dark-theme .bg-white {
+  background-color: rgba(30, 30, 46, 0.8) !important;
+}
+
+.dark-theme .text-gray-800 {
+  color: #e0e0e0 !important;
+}
+
+.dark-theme .text-gray-500,
+.dark-theme .text-gray-600,
+.dark-theme .text-gray-400 {
+  color: #a0a0a0 !important;
+}
+
+.dark-theme .text-purple-800 {
+  color: #d8b4fe !important;
+}
+
+.dark-theme .text-purple-700 {
+  color: #c084fc !important;
+}
+
+.dark-theme .text-purple-600,
+.dark-theme .text-purple-500,
+.dark-theme .text-purple-400 {
+  color: #a855f7 !important;
+}
+
 /* Animations */
 @keyframes float {
   0% {
@@ -88,6 +121,41 @@ input[type="range"]::-moz-range-thumb {
 
 .pulse {
   animation: pulse 3s ease-in-out infinite;
+}
+
+.pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.1);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+/* Custom animations for transitions */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Custom font classes */
+.font-display {
+  font-family: 'Concert One', 'Quicksand', cursive;
 }
 
 /* Mobile specific styles */

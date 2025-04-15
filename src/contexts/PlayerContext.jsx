@@ -1,7 +1,6 @@
 // src/contexts/PlayerContext.jsx
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { getSongById } from '../../src/mockMusicData';
-import { songs } from '../../src/mockMusicData';
+import { getSongById, songs } from '../../src/mockMusicData';
 
 const PlayerContext = createContext();
 
@@ -60,7 +59,7 @@ export const PlayerProvider = ({ children }) => {
 
       // Duration change event
       audioRef.current.addEventListener('durationchange', () => {
-        setDuration(audioRef.current.duration);
+        setDuration(audioRef.current.duration || 0);
       });
 
       // End of song event
@@ -124,7 +123,6 @@ export const PlayerProvider = ({ children }) => {
       setCurrentTime(time);
     }
   };
-
 
   const next = () => {
     if (currentSong) {
