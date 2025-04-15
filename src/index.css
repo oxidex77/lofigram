@@ -1,0 +1,46 @@
+/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Quicksand', 'Inter', 'Avenir', 'Helvetica', 'Arial', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #213547;
+  background-color: #fcf1f7;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#root {
+  width: 100%;
+}
+
+/* Custom utility classes */
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(to right, #db2777, #7c3aed);
+}
+
+.bg-blur {
+  backdrop-filter: blur(8px);
+}
