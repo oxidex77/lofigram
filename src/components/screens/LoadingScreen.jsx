@@ -4,7 +4,7 @@ import { useUser } from '../../contexts/UserContext';
 import { useApp } from '../../contexts/AppContext';
 
 // Constants for cleaner management
-const LOADING_INTERVAL = 120; // ms per progress update step
+const LOADING_INTERVAL = 150; // ms per progress update step
 const MAX_INCREMENT = 8; // Max random increment per step
 const MIN_INCREMENT = 2; // Min random increment per step
 const MESSAGE_UPDATE_THRESHOLD = 10; // Update message every X percent
@@ -18,7 +18,7 @@ const loadingMessages = [
     "Collecting sleepy tunes... 😴", // 30-39%
     "Assembling kawaii sounds... 🌸", // 40-49%
     "Finding the perfect rhythm... 🎵", // 50-59%
-    "Creating your zen space... 🧘‍♀️", // 60-69%
+    "Creating your zen space... 🧘‍♀️", // 60a-69%
     "Mixing looped melodies... 💿", // 70-79%
     "Preparing study beats... 📚", // 80-89%
     "Ready to drift away... ✨"  // 90-100%
