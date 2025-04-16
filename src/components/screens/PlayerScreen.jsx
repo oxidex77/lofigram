@@ -1,12 +1,10 @@
 // src/components/screens/PlayerScreen.jsx
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { useApp } from '../../contexts/AppContext';
 import { useUser } from '../../contexts/UserContext';
-import { getArtistById, getAlbumById } from '../../../src/mockMusicData';
-import { pageTransition, floatingAnimation, glowPulse } from '../../animations/animations';
-import ThemeToggle from '../player/ThemeToggle';
+import { getArtistById, getAlbumById } from '../../data/mockMusicData';
 
 const PlayerScreen = () => {
   const { 
@@ -23,10 +21,18 @@ const PlayerScreen = () => {
     setVolume
   } = usePlayer();
   
-  const { minimizePlayer, theme } = useApp();
+  const { minimizePlayer, theme, changeTheme } = useApp();
   const { isSongLiked, toggleLikeSong } = useUser();
   const [showVisualizer, setShowVisualizer] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Theme options
+  const themes = [
+    { id: 'pastel', name: 'Pastel', emoji: '🌸' },
+    { id: 'night', name: 'Night', emoji: '🌙' },
+    { id: 'cozy', name: 'Cozy', emoji: '☕' },
+    { id: 'dark', name: 'Dark', emoji: '✨' },
+  ];
 
   // Detect mobile devices for optimization
   useEffect(() => {
@@ -57,20 +63,6 @@ const PlayerScreen = () => {
 
     return () => clearInterval(interval);
   }, [isPlaying, showVisualizer, barCount, isMobile]);
-
-  useEffect(() => {
-    // Enable swipe gestures for next/previous
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowRight') {
-        next();
-      } else if (e.key === 'ArrowLeft') {
-        previous();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [next, previous]);
 
   if (!currentSong) {
     minimizePlayer();
@@ -111,57 +103,54 @@ const PlayerScreen = () => {
 
   return (
     <motion.div 
-      className={`fixed inset-0 ${getThemeBackground()} z-50 flex flex-col h-screen max-h-screen overflow-hidden`}
-      variants={pageTransition}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
+      className={`fixed inset-0 ${getThemeBackground()} z-50 flex flex-col h-screen`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
     >
-      {/* Background decorative elements - conditionally render for performance */}
-      {!isMobile && (
-        <>
-          <motion.div 
-            className={`absolute top-10 left-10 w-40 h-40 ${theme === 'night' || theme === 'dark' ? 'bg-indigo-500' : 'bg-pink-300'} rounded-full blur-3xl opacity-20`}
-            variants={floatingAnimation}
-            initial="initial"
-            animate="animate"
-            custom={1.5}
-          />
-          <motion.div 
-            className={`absolute bottom-20 right-10 w-60 h-60 ${theme === 'night' || theme === 'dark' ? 'bg-violet-500' : 'bg-purple-300'} rounded-full blur-3xl opacity-20`}
-            variants={floatingAnimation}
-            initial="initial"
-            animate="animate"
-            custom={2}
-          />
-        </>
-      )}
-
-      {/* Header */}
-      <div className="relative z-10 p-4">
+      {/* Header with back button */}
+      <div className="relative z-10 p-4 flex justify-between items-center">
         <button 
-          className={`p-2 -ml-2 ${theme === 'night' || theme === 'dark' ? 'text-gray-300' : 'text-purple-700'}`}
+          className={`p-2 ${theme === 'night' || theme === 'dark' ? 'text-gray-300' : 'text-purple-700'}`}
           onClick={minimizePlayer}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
+        
+        {/* Theme buttons in the header - NO NEED TO SCROLL */}
+        <div className="flex space-x-2">
+          {themes.map((t) => (
+            <motion.button
+              key={t.id}
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
+                theme === t.id 
+                  ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md' 
+                  : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
+              }`}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => changeTheme(t.id)}
+            >
+              {t.emoji}
+            </motion.button>
+          ))}
+        </div>
       </div>
 
-      {/* Content - main flex container */}
-      <div className="flex flex-col items-center justify-between px-4 flex-1 overflow-hidden">
-        {/* Top section - Album Cover */}
-        <div className="flex-shrink-0 w-full flex justify-center mb-2">
-          <motion.div className="relative">
-            <motion.div 
-              className={`w-56 h-56 sm:w-64 sm:h-64 rounded-2xl overflow-hidden shadow-xl relative ${
-                isMobile ? '' : 'mb-2'
-              }`}
-              variants={glowPulse}
-              initial="initial"
-              animate={isPlaying ? "animate" : "initial"}
-            >
+      {/* Main content container */}
+      <div className="flex-1 flex flex-col px-4 justify-between">
+        {/* Cover art and song info */}
+        <div className="flex-1 flex flex-col items-center justify-center">
+          {/* Album Cover */}
+          <motion.div
+            className="relative mb-6"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden shadow-xl">
               <img 
                 src={currentSong.cover} 
                 alt={currentSong.title} 
@@ -170,70 +159,64 @@ const PlayerScreen = () => {
               
               {/* Overlay for visual effect */}
               <div className={`absolute inset-0 ${theme === 'night' || theme === 'dark' ? 'bg-indigo-900/20' : 'bg-pink-500/10'} rounded-2xl`} />
-            </motion.div>
+            </div>
 
-            {/* Floating notes - only on non-mobile for performance */}
-            {isPlaying && !isMobile && (
+            {/* Floating notes */}
+            {isPlaying && (
               <>
                 <motion.div 
                   className={`absolute -top-4 -right-4 ${theme === 'night' || theme === 'dark' ? 'text-indigo-400' : 'text-purple-500'} text-xl`}
-                  variants={floatingAnimation}
-                  initial="initial"
-                  animate="animate"
-                  custom={0.5}
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
                 >
                   ♪
                 </motion.div>
                 <motion.div 
                   className={`absolute top-1/4 -right-6 ${theme === 'night' || theme === 'dark' ? 'text-violet-400' : 'text-pink-500'} text-2xl`}
-                  variants={floatingAnimation}
-                  initial="initial"
-                  animate="animate"
-                  custom={1.2}
+                  animate={{ y: [0, -15, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
                 >
                   ♫
                 </motion.div>
                 <motion.div 
                   className={`absolute -bottom-2 -left-4 ${theme === 'night' || theme === 'dark' ? 'text-indigo-400' : 'text-purple-500'} text-xl`}
-                  variants={floatingAnimation}
-                  initial="initial"
-                  animate="animate"
-                  custom={0.8}
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, delay: 1 }}
                 >
                   ♩
                 </motion.div>
               </>
             )}
           </motion.div>
-        </div>
 
-        {/* Audio Visualizer - compact and conditionally rendered */}
-        {isPlaying && showVisualizer && (
-          <div className="flex items-end space-x-1 h-8 my-2">
-            {barHeights.map((height, index) => (
-              <motion.div 
-                key={index}
-                className={`w-1 ${theme === 'night' || theme === 'dark' ? 'bg-indigo-400' : 'bg-purple-400'} rounded-full`}
-                initial={{ height: 0 }}
-                animate={{ height: `${height}%` }}
-                transition={{ duration: 0.2 }}
-              />
-            ))}
+          {/* Audio Visualizer */}
+          {isPlaying && showVisualizer && (
+            <div className="flex items-end space-x-1 h-8 mb-3">
+              {barHeights.map((height, index) => (
+                <motion.div 
+                  key={index}
+                  className={`w-1 ${theme === 'night' || theme === 'dark' ? 'bg-indigo-400' : 'bg-purple-400'} rounded-full`}
+                  initial={{ height: 0 }}
+                  animate={{ height: `${height}%` }}
+                  transition={{ duration: 0.2 }}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Song Info */}
+          <div className="text-center mb-6">
+            <h2 className={`text-2xl font-bold ${getThemeTextColor()}`}>
+              {currentSong.title}
+            </h2>
+            <p className={`${getThemeSecondaryColor()} mt-1`}>
+              {artist?.name || 'Unknown Artist'} • {album?.title || 'Unknown Album'}
+            </p>
           </div>
-        )}
-
-        {/* Song Info - compact for mobile */}
-        <div className="text-center mb-3">
-          <h2 className={`text-xl font-bold ${getThemeTextColor()}`}>
-            {currentSong.title}
-          </h2>
-          <p className={`${getThemeSecondaryColor()} mt-1 text-sm`}>
-            {artist?.name || 'Unknown Artist'} • {album?.title || 'Unknown Album'}
-          </p>
         </div>
 
-        {/* Bottom section - Controls - needs to be visible without scrolling */}
-        <div className="flex flex-col w-full pb-6">
+        {/* Player controls */}
+        <div className="pb-8">
           {/* Progress Bar */}
           <div 
             className={`h-1 ${theme === 'night' || theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} rounded-full mb-2 cursor-pointer`}
@@ -254,7 +237,7 @@ const PlayerScreen = () => {
           </div>
           
           {/* Main Controls */}
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex justify-between items-center mb-5">
             {/* Like Button */}
             <motion.button
               className="p-2"
@@ -324,8 +307,8 @@ const PlayerScreen = () => {
             </motion.button>
           </div>
           
-          {/* Volume Slider - more compact on mobile */}
-          <div className={`flex items-center ${isMobile ? 'mb-3' : 'mb-4'}`}>
+          {/* Volume Slider */}
+          <div className="flex items-center mb-5">
             <svg className={`w-5 h-5 ${theme === 'night' || theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mr-2`} fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071a1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
@@ -342,9 +325,6 @@ const PlayerScreen = () => {
               <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071a1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
           </div>
-          
-          {/* Theme Toggle - moved up for better mobile visibility */}
-          <ThemeToggle />
         </div>
       </div>
     </motion.div>

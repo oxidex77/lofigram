@@ -80,13 +80,13 @@ const HomeScreen = () => {
       <div className={`sticky top-0 z-20 ${getHeaderBackground()} backdrop-filter backdrop-blur-lg shadow-sm px-4 py-3`}>
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <motion.img 
+            {/* <motion.img 
               src="/assets/characters/rainy.png" 
               alt="Mascot" 
               className="w-14 h-14 object-contain mr-3 hidden sm:block"
               whileHover={{ scale: 1.1, rotate: [0, -5, 0, 5, 0] }}
               transition={{ duration: 0.5 }}
-            />
+            /> */}
             <div>
               <h1 className={`text-2xl font-bold ${getGradientText()} font-display`}>
                 Lofigram
@@ -178,13 +178,13 @@ const HomeScreen = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1 }}
       >
-        <motion.img
+        {/* <motion.img
           src="/assets/characters/rainy.png"
           alt="Decorative Mascot"
           className="w-full h-full object-contain"
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        />
+        /> */}
       </motion.div>
     </motion.div>
   );

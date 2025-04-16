@@ -125,7 +125,7 @@ const ProfileScreen = () => {
         </motion.div>
 
         {/* Mascots - enhanced with better animations */}
-        <div className="flex justify-center items-end space-x-8 my-6">
+        {/* <div className="flex justify-center items-end space-x-8 my-6">
           <motion.div
             className="relative"
             variants={itemVariants}
@@ -169,7 +169,7 @@ const ProfileScreen = () => {
               ♪
             </motion.div>
           </motion.div>
-        </div>
+        </div> */}
 
         {/* Loading message with improved animation */}
         <motion.div
