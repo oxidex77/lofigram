@@ -1,5 +1,5 @@
 // src/components/screens/HomeScreen.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../contexts/AppContext';
 import { useUser } from '../../contexts/UserContext';
@@ -15,8 +15,17 @@ import FilteredTab from './tabs/FilteredTab';
 import AddToPlaylistModal from '../modals/AddToPlaylistModal';
 
 const HomeScreen = () => {
-  const { activeTab, showPlaylistModal, theme, isTransitioning } = useApp();
+  const { activeTab, showPlaylistModal, theme, isTransitioning, changeTheme } = useApp();
   const { userName } = useUser();
+  const [showThemeSelector, setShowThemeSelector] = useState(false);
+
+  // Theme options
+  const themes = [
+    { id: 'pastel', name: 'Pastel', emoji: '🌸' },
+    { id: 'night', name: 'Night', emoji: '🌙' },
+    { id: 'cozy', name: 'Cozy', emoji: '☕' },
+    { id: 'dark', name: 'Dark', emoji: '✨' },
+  ];
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -96,14 +105,39 @@ const HomeScreen = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center">
-            {/* <motion.img 
-              src="/assets/characters/rainy.png" 
-              alt="Mascot" 
-              className="w-12 h-12 object-contain mr-3 hidden sm:block"
-              animate={{ y: [0, -3, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            /> */}
+          <div className="flex items-center space-x-2">
+            {/* Theme selector toggle button (visible on mobile) */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowThemeSelector(!showThemeSelector)}
+              className={`md:hidden w-10 h-10 rounded-full flex items-center justify-center ${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+            </motion.button>
+            
+            {/* Theme buttons (hidden on mobile, always visible on desktop) */}
+            <div className="hidden md:flex space-x-1">
+              {themes.map((t) => (
+                <motion.button
+                  key={t.id}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-base ${
+                    theme === t.id 
+                      ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md' 
+                      : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => changeTheme(t.id)}
+                >
+                  {t.emoji}
+                </motion.button>
+              ))}
+            </div>
+            
+            {/* User avatar */}
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -115,8 +149,41 @@ const HomeScreen = () => {
         </div>
       </div>
 
+      {/* Mobile Theme Selector (slides down when activated) */}
+      <AnimatePresence>
+        {showThemeSelector && (
+          <motion.div 
+            className={`md:hidden sticky top-16 z-15 ${getHeaderBackground()} backdrop-filter backdrop-blur-lg px-4 py-2`}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex justify-center space-x-3 py-2">
+              {themes.map((t) => (
+                <motion.button
+                  key={t.id}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                    theme === t.id 
+                      ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md' 
+                      : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
+                  }`}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    changeTheme(t.id);
+                    setShowThemeSelector(false);
+                  }}
+                >
+                  {t.emoji}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Tab Navigation */}
-      <div className={`sticky top-16 z-10 ${getTabsBackground()} backdrop-filter backdrop-blur-md`}>
+      <div className={`sticky ${showThemeSelector ? 'top-32' : 'top-16'} z-10 ${getTabsBackground()} backdrop-filter backdrop-blur-md`}>
         <TabNavigation />
       </div>
 
