@@ -39,20 +39,30 @@ const PlaylistEditor = ({ onClose }) => {
     return matchesAlbum || matchesArtist || hasTracks;
   });
 
-  // Replace just this function in your PlaylistEditor.jsx
+  // Replace the handleCreatePlaylist function with this optimized version
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
     if (newPlaylistName.trim()) {
-      // Disable the form during transition
       const name = newPlaylistName.trim();
+
+      // First, clear input field immediately for better responsiveness
       setNewPlaylistName('');
 
-      // Create playlist with a small delay to allow animation to finish
-      setTimeout(() => {
-        const playlistId = createPlaylist(name);
-        setSelectedPlaylist(playlistId);
+      // Use requestAnimationFrame for smoother animation
+      requestAnimationFrame(() => {
+        // Hide the form with a subtle transition
         setShowCreateForm(false);
-      }, 150); // Small delay for animation to complete
+
+        // Short delay before creating playlist to allow animation to complete
+        setTimeout(() => {
+          // Create playlist and update selected playlist in one batch
+          const playlistId = createPlaylist(name);
+          setSelectedPlaylist(playlistId);
+
+          // Force a repaint before any notification appears
+          document.body.offsetHeight; // Trigger reflow
+        }, 100);
+      });
     }
   };
 

@@ -14,20 +14,20 @@ const AddToPlaylistModal = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [playlistCreated, setPlaylistCreated] = useState(false);
   const [playlistAddedTo, setPlaylistAddedTo] = useState(null);
-  
+
   // Detect mobile for optimized positioning
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  
+
   const song = getSongById(selectedPlaylistForAdd);
-  
+
   // Return early if no song is selected to prevent errors
   if (!song) {
     return null;
@@ -35,30 +35,47 @@ const AddToPlaylistModal = () => {
 
   const handleAddToPlaylist = (playlistId) => {
     if (!playlistId) return;
-    
+
     addSongToPlaylist(playlistId, song.id);
-    
+
     // Show feedback that song was added
     setPlaylistAddedTo(userPlaylists.find(p => p.id === playlistId)?.title || 'Playlist');
-    
+
     // Close modal after short delay to show feedback
     setTimeout(() => {
       togglePlaylistModal(null);
     }, 2000);
   };
 
+  // Replace this function in your AddToPlaylistModal.jsx
   const handleCreatePlaylist = () => {
     if (newPlaylistName.trim()) {
-      const playlistId = createPlaylist(newPlaylistName.trim());
-      addSongToPlaylist(playlistId, song.id);
-      
-      // Show creation feedback
-      setPlaylistCreated(true);
-      
-      // Close modal after feedback
-      setTimeout(() => {
-        togglePlaylistModal(null);
-      }, 1500);
+      const name = newPlaylistName.trim();
+
+      // 1. Clear input and hide input UI first for immediate feedback
+      setNewPlaylistName('');
+
+      // 2. Use requestAnimationFrame to ensure UI updates before heavy operations
+      requestAnimationFrame(() => {
+        // 3. Create playlist and add song in one operation to reduce state updates
+        const playlistId = createPlaylist(name);
+
+        // 4. Wait for a frame to ensure UI is responsive
+        requestAnimationFrame(() => {
+          // 5. Add song to playlist
+          addSongToPlaylist(playlistId, song.id);
+
+          // 6. Show success state with a small delay to ensure smooth transition
+          setTimeout(() => {
+            setPlaylistCreated(true);
+
+            // 7. Close modal after showing feedback, with enough time to see the animation
+            setTimeout(() => {
+              togglePlaylistModal(null);
+            }, 1600); // Slightly longer to ensure the animation completes
+          }, 100);
+        });
+      });
     }
   };
 
@@ -93,7 +110,7 @@ const AddToPlaylistModal = () => {
 
   return (
     <>
-      <motion.div 
+      <motion.div
         className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-40"
         variants={backdropAnimation}
         initial="hidden"
@@ -101,7 +118,7 @@ const AddToPlaylistModal = () => {
         exit="exit"
         onClick={() => togglePlaylistModal(null)}
       />
-      
+
       <motion.div
         className={`${getModalPosition()} ${getBackground()} rounded-t-3xl p-6 z-50 overflow-y-auto`}
         variants={modalAnimation}
@@ -117,13 +134,17 @@ const AddToPlaylistModal = () => {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.3 }} // Slightly increased for smoother animation
             >
-              <motion.div 
+              <motion.div
                 className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-400 to-purple-500 flex items-center justify-center mb-4"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 150, // Reduced from 200 for smoother animation
+                  damping: 12     // Increased from 10 for less bouncing
+                }}
               >
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -145,7 +166,7 @@ const AddToPlaylistModal = () => {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
             >
-              <motion.div 
+              <motion.div
                 className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-400 to-purple-500 flex items-center justify-center mb-4"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -172,7 +193,7 @@ const AddToPlaylistModal = () => {
                 <h3 className={`text-xl font-bold ${getTextColor()}`}>
                   Add to Playlist
                 </h3>
-                <button 
+                <button
                   className={`p-2 ${getSubTextColor()} hover:opacity-70`}
                   onClick={() => togglePlaylistModal(null)}
                 >
@@ -181,12 +202,12 @@ const AddToPlaylistModal = () => {
                   </svg>
                 </button>
               </div>
-              
+
               <div className="flex items-center space-x-3 mb-5">
                 <div className="w-14 h-14 rounded-lg overflow-hidden shadow-md flex-shrink-0">
-                  <img 
-                    src={song.cover} 
-                    alt={song.title} 
+                  <img
+                    src={song.cover}
+                    alt={song.title}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -195,25 +216,24 @@ const AddToPlaylistModal = () => {
                   <p className={`text-sm ${getSubTextColor()}`}>Select a playlist below</p>
                 </div>
               </div>
-              
+
               {!showCreateInput ? (
                 <>
                   <div className="space-y-2 mb-5">
                     {userPlaylists.map(playlist => (
                       <motion.button
                         key={playlist.id}
-                        className={`flex items-center w-full p-3 ${
-                          theme === 'night' || theme === 'dark' 
-                            ? 'bg-gray-800 hover:bg-gray-700' 
-                            : 'bg-purple-50 hover:bg-purple-100'
-                        } rounded-xl transition-colors`}
+                        className={`flex items-center w-full p-3 ${theme === 'night' || theme === 'dark'
+                          ? 'bg-gray-800 hover:bg-gray-700'
+                          : 'bg-purple-50 hover:bg-purple-100'
+                          } rounded-xl transition-colors`}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleAddToPlaylist(playlist.id)}
                       >
                         <div className="w-10 h-10 rounded-lg overflow-hidden shadow-sm mr-3 flex-shrink-0">
-                          <img 
-                            src={playlist.cover} 
-                            alt={playlist.title} 
+                          <img
+                            src={playlist.cover}
+                            alt={playlist.title}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -224,13 +244,12 @@ const AddToPlaylistModal = () => {
                       </motion.button>
                     ))}
                   </div>
-                  
+
                   <motion.button
-                    className={`w-full py-3 px-4 ${
-                      theme === 'night' || theme === 'dark'
-                        ? 'bg-gray-800 border-2 border-dashed border-gray-700 text-purple-400'
-                        : 'bg-white border-2 border-dashed border-purple-300 text-purple-600'
-                    } rounded-xl hover:opacity-80 transition-colors flex items-center justify-center`}
+                    className={`w-full py-3 px-4 ${theme === 'night' || theme === 'dark'
+                      ? 'bg-gray-800 border-2 border-dashed border-gray-700 text-purple-400'
+                      : 'bg-white border-2 border-dashed border-purple-300 text-purple-600'
+                      } rounded-xl hover:opacity-80 transition-colors flex items-center justify-center`}
                     onClick={() => setShowCreateInput(true)}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.98 }}
@@ -251,20 +270,19 @@ const AddToPlaylistModal = () => {
                     className={`w-full px-4 py-3 rounded-xl ${getInputBackground()} focus:border-purple-500 focus:outline-none ${getTextColor()} placeholder-purple-300 mb-4`}
                     autoFocus
                   />
-                  
+
                   <div className="flex space-x-2">
                     <motion.button
-                      className={`flex-1 py-3 px-4 ${
-                        theme === 'night' || theme === 'dark'
-                          ? 'bg-gray-700 text-gray-300'
-                          : 'bg-gray-200 text-gray-700'
-                      } rounded-xl hover:opacity-80 transition-colors`}
+                      className={`flex-1 py-3 px-4 ${theme === 'night' || theme === 'dark'
+                        ? 'bg-gray-700 text-gray-300'
+                        : 'bg-gray-200 text-gray-700'
+                        } rounded-xl hover:opacity-80 transition-colors`}
                       onClick={() => setShowCreateInput(false)}
                       whileTap={{ scale: 0.98 }}
                     >
                       Cancel
                     </motion.button>
-                    
+
                     <motion.button
                       className="flex-1 py-3 px-4 bg-gradient-to-r from-pink-400 to-purple-500 text-white rounded-xl hover:opacity-90 transition-colors"
                       onClick={handleCreatePlaylist}

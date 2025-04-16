@@ -15,7 +15,7 @@ const SongCard = ({ song }) => {
     const menuRef = useRef(null);
     const optionsButtonRef = useRef(null);
     const cardRef = useRef(null);
-    
+
     const artist = getArtistById(song.artist);
     const isActive = currentSong?.id === song.id;
     const isLiked = isSongLiked(song.id);
@@ -43,7 +43,7 @@ const SongCard = ({ song }) => {
                 !menuRef.current.contains(event.target) &&
                 optionsButtonRef.current &&
                 !optionsButtonRef.current.contains(event.target)) {
-                
+
                 // Only close if we're not clicking inside the menu or button
                 setShowOptions(false);
                 setMenuActive(false);
@@ -53,7 +53,7 @@ const SongCard = ({ song }) => {
         // Use both mouse and touch events for better device coverage
         document.addEventListener('mousedown', handleClickOutside, true);
         document.addEventListener('touchstart', handleClickOutside, true);
-        
+
         return () => {
             document.removeEventListener('mousedown', handleClickOutside, true);
             document.removeEventListener('touchstart', handleClickOutside, true);
@@ -110,17 +110,26 @@ const SongCard = ({ song }) => {
         return 'bg-white shadow-lg';
     };
 
-    // Heart Animation Variants
     const heartVariants = {
         initial: {
             scale: 1,
+            filter: "saturate(0%) brightness(100%)",
+            color: "rgb(156, 163, 175)", // gray-400
             transition: { duration: 0.2, ease: "easeOut" }
         },
         liked: {
-            scale: [1, 1.3, 1.1], 
+            scale: [1, 1.5, 0.8, 1.2, 1],
+            filter: [
+                "saturate(0%) brightness(100%)",
+                "saturate(100%) brightness(110%)",
+                "saturate(120%) brightness(120%)",
+                "saturate(100%) brightness(110%)"
+            ],
+            color: "rgb(236, 72, 153)", // pink-500
             transition: {
-                duration: 0.3,
-                ease: "easeOut"
+                duration: 0.6,
+                ease: [0.34, 1.56, 0.64, 1], // Custom spring-like easing
+                times: [0, 0.3, 0.5, 0.7, 1]
             }
         }
     };
@@ -200,24 +209,71 @@ const SongCard = ({ song }) => {
             {/* Like Button with Heart Animation */}
             <motion.button
                 aria-label="Like button"
-                className="ml-2 p-1.5 flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-50"
+                className="relative ml-2 p-1.5 flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-50"
                 onClick={(e) => {
                     e.stopPropagation();
                     toggleLikeSong(song.id);
                 }}
-                variants={heartVariants}
-                animate={isLiked ? "liked" : "initial"}
                 whileTap={{ scale: 0.9 }}
             >
-                {isLiked ? (
-                    <svg className="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                    </svg>
-                ) : (
-                    <svg className="w-5 h-5 text-gray-400 hover:text-gray-500 transition-colors duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                )}
+                {/* Heart Background Pulse */}
+                <AnimatePresence>
+                    {isLiked && (
+                        <motion.div
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{
+                                scale: [0, 1.6, 0],
+                                opacity: [0, 0.15, 0]
+                            }}
+                            exit={{ opacity: 0, scale: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="absolute inset-0 bg-pink-400 rounded-full"
+                        />
+                    )}
+                </AnimatePresence>
+
+                {/* Heart Icon with Enhanced Animation */}
+                <motion.div
+                    variants={heartVariants}
+                    initial="initial"
+                    animate={isLiked ? "liked" : "initial"}
+                    className="relative z-10"
+                >
+                    {isLiked ? (
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+
+                            {/* Optional: Animated particles when liked */}
+                            <g className="heart-particles">
+                                {[...Array(6)].map((_, i) => (
+                                    <motion.circle
+                                        key={i}
+                                        r={1}
+                                        cx={10}
+                                        cy={10}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        initial={{ scale: 0 }}
+                                        animate={isLiked ? {
+                                            scale: [0, 1, 0],
+                                            x: [0, (Math.random() - 0.5) * 15],
+                                            y: [0, (Math.random() - 0.5) * 15],
+                                        } : {}}
+                                        transition={{
+                                            duration: 0.8,
+                                            delay: i * 0.05,
+                                            ease: "easeOut"
+                                        }}
+                                    />
+                                ))}
+                            </g>
+                        </svg>
+                    ) : (
+                        <svg className="w-5 h-5 transition-colors duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    )}
+                </motion.div>
             </motion.button>
 
             {/* Options Menu Button - Fixed and Enhanced Reliability */}
@@ -230,15 +286,15 @@ const SongCard = ({ song }) => {
                     onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        
+
                         // Explicitly remove focus to prevent issues with sequential clicks
                         optionsButtonRef.current?.blur();
-                        
+
                         // Force close any open menus in other cards
-                        document.dispatchEvent(new CustomEvent('closeAllMenus', { 
-                            detail: { except: song.id } 
+                        document.dispatchEvent(new CustomEvent('closeAllMenus', {
+                            detail: { except: song.id }
                         }));
-                        
+
                         // Toggle menu state directly for better responsiveness
                         setShowOptions(prev => !prev);
                     }}
@@ -258,43 +314,43 @@ const SongCard = ({ song }) => {
                             ref={menuRef}
                             data-testid={`options-menu-${song.id}`}
                             className={`absolute right-0 z-50 rounded-lg overflow-hidden ${getMenuBackground()}`}
-                            style={{ 
+                            style={{
                                 width: '145px',
                                 // Smart positioning based on position in list
                                 ...(isFirstInList
-                                    ? { 
-                                        bottom: 'auto', 
+                                    ? {
+                                        bottom: 'auto',
                                         top: '100%',
-                                        marginTop: '5px' 
-                                      } 
-                                    : { 
+                                        marginTop: '5px'
+                                    }
+                                    : {
                                         bottom: '100%',
                                         top: 'auto',
-                                        marginBottom: '5px' 
-                                      }
+                                        marginBottom: '5px'
+                                    }
                                 )
                             }}
-                            initial={{ 
-                                opacity: 0, 
-                                scale: 0.9, 
+                            initial={{
+                                opacity: 0,
+                                scale: 0.9,
                                 ...(isFirstInList
-                                    ? { y: -5 } 
+                                    ? { y: -5 }
                                     : { y: 5 }
                                 )
                             }}
-                            animate={{ 
-                                opacity: 1, 
-                                scale: 1, 
-                                y: 0 
+                            animate={{
+                                opacity: 1,
+                                scale: 1,
+                                y: 0
                             }}
-                            exit={{ 
-                                opacity: 0, 
-                                scale: 0.9, 
+                            exit={{
+                                opacity: 0,
+                                scale: 0.9,
                                 ...(isFirstInList
-                                    ? { y: -5 } 
+                                    ? { y: -5 }
                                     : { y: 5 }
                                 ),
-                                transition: { duration: 0.15 } 
+                                transition: { duration: 0.15 }
                             }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                             // Added click handler directly on menu container to prevent bubbling
@@ -303,10 +359,9 @@ const SongCard = ({ song }) => {
                             <div className="py-1">
                                 {/* Add to Playlist option - Unchanged */}
                                 <motion.button
-                                    className={`flex items-center w-full px-3 py-1.5 text-xs text-left rounded-md transition-colors duration-200 ${
-                                        theme === 'night' || theme === 'dark'
-                                            ? 'text-gray-200 hover:bg-gray-700/70'
-                                            : 'text-gray-600 hover:bg-purple-50'
+                                    className={`flex items-center w-full px-3 py-1.5 text-xs text-left rounded-md transition-colors duration-200 ${theme === 'night' || theme === 'dark'
+                                        ? 'text-gray-200 hover:bg-gray-700/70'
+                                        : 'text-gray-600 hover:bg-purple-50'
                                         }`}
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -324,10 +379,9 @@ const SongCard = ({ song }) => {
 
                                 {/* Share Song button - Unchanged */}
                                 <motion.button
-                                    className={`flex items-center w-full px-3 py-1.5 text-xs text-left rounded-md transition-colors duration-200 ${
-                                        theme === 'night' || theme === 'dark'
-                                            ? 'text-gray-200 hover:bg-gray-700/70'
-                                            : 'text-gray-600 hover:bg-purple-50'
+                                    className={`flex items-center w-full px-3 py-1.5 text-xs text-left rounded-md transition-colors duration-200 ${theme === 'night' || theme === 'dark'
+                                        ? 'text-gray-200 hover:bg-gray-700/70'
+                                        : 'text-gray-600 hover:bg-purple-50'
                                         }`}
                                     onClick={(e) => {
                                         e.stopPropagation();

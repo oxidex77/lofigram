@@ -4,9 +4,9 @@ import { useUser } from '../../contexts/UserContext';
 import { useApp } from '../../contexts/AppContext';
 
 // Constants for cleaner management
-const LOADING_INTERVAL = 180; // ms per progress update step
-const MAX_INCREMENT = 4; // Max random increment per step
-const MIN_INCREMENT = 1; // Min random increment per step
+const LOADING_INTERVAL = 120; // ms per progress update step
+const MAX_INCREMENT = 8; // Max random increment per step
+const MIN_INCREMENT = 2; // Min random increment per step
 const MESSAGE_UPDATE_THRESHOLD = 10; // Update message every X percent
 const TRANSITION_DURATION_PAGE = 0.6; // Page fade in/out duration
 const TRANSITION_DURATION_FORM = 0.4; // Form slide/fade duration
@@ -50,6 +50,34 @@ const LoadingScreen = () => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
+    // Add this useEffect right after your existing useEffects
+    useEffect(() => {
+        // Fix for mobile viewport height
+        const setVhVariable = () => {
+            // This sets a CSS variable equal to the real viewport height
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+
+        // Set on mount
+        setVhVariable();
+
+        // Reset on resize and orientation change
+        window.addEventListener('resize', setVhVariable);
+        window.addEventListener('orientationchange', setVhVariable);
+
+        // Ensure mobile browser address bars don't affect layout
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+
+        return () => {
+            window.removeEventListener('resize', setVhVariable);
+            window.removeEventListener('orientationchange', setVhVariable);
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        };
+    }, []);
+
     // Simulate loading progress
     useEffect(() => {
         // Clear any existing interval when component mounts or dependencies change
@@ -74,7 +102,7 @@ const LoadingScreen = () => {
                     if (newBand > currentBand && newBand < loadingMessages.length) {
                         // Use requestAnimationFrame for smoother UI updates if needed, but setState is usually fine
                         setCurrentMessage(loadingMessages[newBand]);
-                    } else if (newProgress === 100 && currentBand < loadingMessages.length -1) {
+                    } else if (newProgress === 100 && currentBand < loadingMessages.length - 1) {
                         // Ensure final message shows if jumps over last threshold
                         setCurrentMessage(loadingMessages[loadingMessages.length - 1]);
                     }
@@ -101,14 +129,14 @@ const LoadingScreen = () => {
         if (hasReached100 && !isUserContextLoading) {
             // Use a short delay to allow the 100% state to render visually if desired
             const transitionTimeout = setTimeout(() => {
-                 if (isProfileComplete) {
+                if (isProfileComplete) {
                     navigateTo('home');
                 } else {
                     setShowNameInput(true); // Trigger the name input form animation
                 }
             }, 400); // Short delay (adjust as needed) for visual pause at 100%
 
-             return () => clearTimeout(transitionTimeout); // Cleanup timeout
+            return () => clearTimeout(transitionTimeout); // Cleanup timeout
         }
     }, [hasReached100, isUserContextLoading, isProfileComplete, navigateTo]);
 
@@ -168,7 +196,7 @@ const LoadingScreen = () => {
         }
     };
 
-     const itemVariants = {
+    const itemVariants = {
         hidden: { y: 15, opacity: 0 },
         visible: {
             y: 0,
@@ -183,7 +211,7 @@ const LoadingScreen = () => {
         transition: { duration: 4, repeat: Infinity, ease: "easeInOut" }
     };
 
-     // --- Helper Functions ---
+    // --- Helper Functions ---
 
     const getMascotEmotion = () => {
         if (loadingProgress < 30) return "😌"; // Relaxed
@@ -205,8 +233,12 @@ const LoadingScreen = () => {
     return (
         // Ensure full screen coverage and prevent overflow issues
         <motion.div
-            key="loadingScreen" // Add key for AnimatePresence tracking
-            className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden min-h-screen z-50" // Higher z-index, min-h-screen
+            key="loadingScreen"
+            className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden z-50"
+            style={{
+                height: 'calc(var(--vh, 1vh) * 100)', // Use the CSS variable
+                touchAction: 'none' // Prevent touch scrolling
+            }}
             variants={pageVariants}
             initial="initial"
             animate="in"
@@ -230,49 +262,49 @@ const LoadingScreen = () => {
                 {isNightMode ? "☀️" : "🌙"}
             </motion.button>
 
-             {/* Decorative Background Elements */}
+            {/* Decorative Background Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 {/* Ambient Elements (Consider performance impact) */}
                 {!isMobile && (
-                     <>
+                    <>
                         {/* Books */}
                         <motion.div
-                             className="absolute bottom-10 left-16 sm:left-20 text-5xl sm:text-6xl opacity-70"
-                             animate={{ y: [0, -5, 0], rotate: [-1, 1, -1] }}
+                            className="absolute bottom-10 left-16 sm:left-20 text-5xl sm:text-6xl opacity-70"
+                            animate={{ y: [0, -5, 0], rotate: [-1, 1, -1] }}
                             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                         >
-                             {isNightMode ? "📚" : "📖"}
-                         </motion.div>
+                        >
+                            {isNightMode ? "📚" : "📖"}
+                        </motion.div>
                         {/* Coffee/Tea Cup */}
                         <motion.div
-                             className="absolute bottom-16 right-20 sm:right-24 text-4xl sm:text-5xl opacity-70"
-                             animate={{ y: [0, -4, 0], rotate: [2, -2, 2] }}
+                            className="absolute bottom-16 right-20 sm:right-24 text-4xl sm:text-5xl opacity-70"
+                            animate={{ y: [0, -4, 0], rotate: [2, -2, 2] }}
                             transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                         >
+                        >
                             {isNightMode ? "🍵" : "☕"}
-                         </motion.div>
+                        </motion.div>
                         {/* Plant */}
                         <motion.div
-                             className="absolute top-16 left-24 sm:left-32 text-4xl sm:text-5xl opacity-70"
-                             animate={{ y: [0, -3, 0], rotate: [-2, 2, -2] }}
+                            className="absolute top-16 left-24 sm:left-32 text-4xl sm:text-5xl opacity-70"
+                            animate={{ y: [0, -3, 0], rotate: [-2, 2, -2] }}
                             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                         >
+                        >
                             {isNightMode ? "🪴" : "🌵"}
-                         </motion.div>
-                     </>
-                 )}
+                        </motion.div>
+                    </>
+                )}
 
-                 {/* Soft Animated Blobs (Fewer for performance) */}
+                {/* Soft Animated Blobs (Fewer for performance) */}
                 <motion.div
                     className={`absolute top-[15%] left-[10%] w-28 h-28 sm:w-36 sm:h-36 rounded-full ${isNightMode ? 'bg-purple-700' : 'bg-pink-300'} opacity-15 blur-3xl`}
                     animate={{ scale: [1, 1.15, 1], x: [0, 10, 0], y: [0, -8, 0] }}
                     transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.div
-                     className={`absolute bottom-[15%] right-[10%] w-32 h-32 sm:w-40 sm:h-40 rounded-full ${isNightMode ? 'bg-indigo-600' : 'bg-sky-200'} opacity-15 blur-3xl`}
+                    className={`absolute bottom-[15%] right-[10%] w-32 h-32 sm:w-40 sm:h-40 rounded-full ${isNightMode ? 'bg-indigo-600' : 'bg-sky-200'} opacity-15 blur-3xl`}
                     animate={{ scale: [1.1, 1, 1.1], x: [0, -10, 0], y: [0, 8, 0] }}
                     transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                 />
+                />
 
                 {/* Night Mode Stars (Reduced count) */}
                 {isNightMode && (
@@ -299,37 +331,37 @@ const LoadingScreen = () => {
                     </>
                 )}
 
-                 {/* Floating Notes (Reduced count, slower animation) */}
-                 {[...Array(isMobile ? 4 : 6)].map((_, i) => (
-                     <motion.div
-                         key={`float-${i}`}
-                         className={`absolute text-lg ${isNightMode ? 'text-purple-300 opacity-60' : 'text-pink-400 opacity-70'}`}
-                         style={{
-                             left: `${Math.random() * 80 + 10}%`,
-                             bottom: `-5%`, // Start below screen
-                         }}
-                         initial={{ y: 0, opacity: 0 }}
-                         animate={{
-                             y: - (window.innerHeight * 0.8), // Animate up 80% of screen height
-                             x: i % 2 === 0 ? [0, 15+i*2, -15-i*2, 0] : [0, -15-i*2, 15+i*2, 0], // Subtle horizontal drift
-                             opacity: [0, 0.7, 0.7, 0],
-                             scale: [0.8, 1.1, 1],
-                         }}
-                         transition={{
+                {/* Floating Notes (Reduced count, slower animation) */}
+                {[...Array(isMobile ? 4 : 6)].map((_, i) => (
+                    <motion.div
+                        key={`float-${i}`}
+                        className={`absolute text-lg ${isNightMode ? 'text-purple-300 opacity-60' : 'text-pink-400 opacity-70'}`}
+                        style={{
+                            left: `${Math.random() * 80 + 10}%`,
+                            bottom: `-5%`, // Start below screen
+                        }}
+                        initial={{ y: 0, opacity: 0 }}
+                        animate={{
+                            y: - (window.innerHeight * 0.8), // Animate up 80% of screen height
+                            x: i % 2 === 0 ? [0, 15 + i * 2, -15 - i * 2, 0] : [0, -15 - i * 2, 15 + i * 2, 0], // Subtle horizontal drift
+                            opacity: [0, 0.7, 0.7, 0],
+                            scale: [0.8, 1.1, 1],
+                        }}
+                        transition={{
                             duration: Math.random() * 6 + 10, // Longer duration (10-16s)
                             repeat: Infinity,
                             delay: Math.random() * 12, // Staggered start times
                             ease: "linear" // Consistent speed
-                         }}
-                     >
-                         {i % 3 === 0 ? '♪' : i % 3 === 1 ? '♫' : '♡'} {/* Use ♡ for heart */}
+                        }}
+                    >
+                        {i % 3 === 0 ? '♪' : i % 3 === 1 ? '♫' : '♡'} {/* Use ♡ for heart */}
                     </motion.div>
-                 ))}
+                ))}
             </div>
 
 
-             {/* Content Container */}
-             {/* Use padding to prevent content hitting edges on mobile */}
+            {/* Content Container */}
+            {/* Use padding to prevent content hitting edges on mobile */}
             <div className={`relative z-10 flex flex-col items-center justify-center w-11/12 sm:w-96 max-w-lg p-4`}>
                 <AnimatePresence mode="wait"> {/* Use mode='wait' for smoother transition between loading/form */}
                     {!showNameInput ? (
@@ -341,12 +373,12 @@ const LoadingScreen = () => {
                             exit={{ opacity: 0, transition: { duration: 0.3 } }} // Simple fade out for content
                             className="flex flex-col items-center text-center" // Center text
                         >
-                             {/* Logo */}
+                            {/* Logo */}
                             <motion.div variants={itemVariants} className="mb-6" animate={subtleBreath}>
                                 <h1
                                     className={`text-5xl sm:text-6xl font-bold text-transparent bg-clip-text ${isNightMode
-                                            ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300' // Lighter night gradient
-                                            : 'bg-gradient-to-r from-pink-500 via-purple-500 to-rose-500'
+                                        ? 'bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300' // Lighter night gradient
+                                        : 'bg-gradient-to-r from-pink-500 via-purple-500 to-rose-500'
                                         } font-display tracking-tight`} // Use a display font if available
                                 >
                                     Lofigram
@@ -356,10 +388,10 @@ const LoadingScreen = () => {
                                 </p>
                             </motion.div>
 
-                             {/* Mascot Container - Added subtle scaling */}
+                            {/* Mascot Container - Added subtle scaling */}
                             <motion.div
-                                 variants={itemVariants}
-                                 className={`w-48 h-48 sm:w-52 sm:h-52 ${isNightMode ? 'bg-slate-800 bg-opacity-50' : 'bg-white bg-opacity-60'} backdrop-filter backdrop-blur-md rounded-full shadow-lg flex items-center justify-center mb-6 relative overflow-hidden border-2 ${isNightMode ? 'border-purple-600 border-opacity-50' : 'border-pink-200 border-opacity-70'}`}
+                                variants={itemVariants}
+                                className={`w-48 h-48 sm:w-52 sm:h-52 ${isNightMode ? 'bg-slate-800 bg-opacity-50' : 'bg-white bg-opacity-60'} backdrop-filter backdrop-blur-md rounded-full shadow-lg flex items-center justify-center mb-6 relative overflow-hidden border-2 ${isNightMode ? 'border-purple-600 border-opacity-50' : 'border-pink-200 border-opacity-70'}`}
                                 animate={{ scale: [1, 1.01, 1] }}
                                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                             >
@@ -388,44 +420,44 @@ const LoadingScreen = () => {
                                 >
                                     {/* Bunny structure (simplified slightly for clarity) */}
                                     <div className="relative w-24 h-24"> {/* Container for head + ears */}
-                                         {/* Head */}
-                                         <div className={`w-20 h-20 rounded-full ${isNightMode ? 'bg-slate-300' : 'bg-white'} absolute bottom-0 left-1/2 transform -translate-x-1/2 shadow-md border ${isNightMode ? 'border-slate-400' : 'border-gray-200'}`}>
-                                             {/* Blush */}
+                                        {/* Head */}
+                                        <div className={`w-20 h-20 rounded-full ${isNightMode ? 'bg-slate-300' : 'bg-white'} absolute bottom-0 left-1/2 transform -translate-x-1/2 shadow-md border ${isNightMode ? 'border-slate-400' : 'border-gray-200'}`}>
+                                            {/* Blush */}
                                             <div className="absolute w-3 h-1.5 rounded-full bg-pink-300 opacity-70 left-3 top-11" />
                                             <div className="absolute w-3 h-1.5 rounded-full bg-pink-300 opacity-70 right-3 top-11" />
 
-                                             {/* Eyes (Blinking animation tied to progress completion) */}
-                                             <motion.div className="absolute w-1.5 h-2.5 bg-gray-800 rounded-full left-5 top-7"
-                                                 animate={{ scaleY: hasReached100 && !showNameInput ? [1, 0.1, 1] : 1 }}
-                                                 transition={{ duration: 0.3, delay: 0.5, ease: "easeInOut" }}
-                                             />
-                                             <motion.div className="absolute w-1.5 h-2.5 bg-gray-800 rounded-full right-5 top-7"
-                                                 animate={{ scaleY: hasReached100 && !showNameInput ? [1, 0.1, 1] : 1 }}
-                                                 transition={{ duration: 0.3, delay: 0.55, ease: "easeInOut" }}
-                                             />
+                                            {/* Eyes (Blinking animation tied to progress completion) */}
+                                            <motion.div className="absolute w-1.5 h-2.5 bg-gray-800 rounded-full left-5 top-7"
+                                                animate={{ scaleY: hasReached100 && !showNameInput ? [1, 0.1, 1] : 1 }}
+                                                transition={{ duration: 0.3, delay: 0.5, ease: "easeInOut" }}
+                                            />
+                                            <motion.div className="absolute w-1.5 h-2.5 bg-gray-800 rounded-full right-5 top-7"
+                                                animate={{ scaleY: hasReached100 && !showNameInput ? [1, 0.1, 1] : 1 }}
+                                                transition={{ duration: 0.3, delay: 0.55, ease: "easeInOut" }}
+                                            />
 
-                                             {/* Mouth */}
+                                            {/* Mouth */}
                                             <div className="absolute text-xs sm:text-sm top-12 left-1/2 transform -translate-x-1/2 text-gray-700">
                                                 {getMascotEmotion()}
                                             </div>
-                                         </div>
+                                        </div>
                                         {/* Ears */}
                                         <motion.div className={`absolute w-5 h-14 ${isNightMode ? 'bg-slate-300 border-slate-400' : 'bg-white border-gray-200'} border rounded-full -top-8 left-5 transform -rotate-10 shadow-sm`}
-                                             animate={{ rotate: [-12, -8, -12] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}/>
+                                            animate={{ rotate: [-12, -8, -12] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }} />
                                         <motion.div className={`absolute w-5 h-14 ${isNightMode ? 'bg-slate-300 border-slate-400' : 'bg-white border-gray-200'} border rounded-full -top-8 right-5 transform rotate-10 shadow-sm`}
-                                            animate={{ rotate: [12, 8, 12] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}/>
+                                            animate={{ rotate: [12, 8, 12] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }} />
                                     </div>
                                     {/* Headphones */}
                                     <div className="absolute top-3 w-full scale-90"> {/* Slightly smaller */}
-                                         <div className={`absolute h-1 w-20 ${isNightMode ? 'bg-purple-400' : 'bg-pink-400'} left-1/2 transform -translate-x-1/2 top-0 rounded-full`} />
-                                         <div className={`absolute w-5 h-6 ${isNightMode ? 'bg-purple-400' : 'bg-pink-400'} rounded -left-1 top-1.5`} />
-                                         <div className={`absolute w-5 h-6 ${isNightMode ? 'bg-purple-400' : 'bg-pink-400'} rounded -right-1 top-1.5`} />
+                                        <div className={`absolute h-1 w-20 ${isNightMode ? 'bg-purple-400' : 'bg-pink-400'} left-1/2 transform -translate-x-1/2 top-0 rounded-full`} />
+                                        <div className={`absolute w-5 h-6 ${isNightMode ? 'bg-purple-400' : 'bg-pink-400'} rounded -left-1 top-1.5`} />
+                                        <div className={`absolute w-5 h-6 ${isNightMode ? 'bg-purple-400' : 'bg-pink-400'} rounded -right-1 top-1.5`} />
                                     </div>
                                 </motion.div>
                             </motion.div>
 
-                             {/* Progress Ring & Text */}
-                             <motion.div variants={itemVariants} className="relative w-36 h-36 sm:w-40 sm:h-40 mb-4 flex items-center justify-center">
+                            {/* Progress Ring & Text */}
+                            <motion.div variants={itemVariants} className="relative w-36 h-36 sm:w-40 sm:h-40 mb-4 flex items-center justify-center">
                                 {/* Background Ring */}
                                 <div className={`absolute inset-0 rounded-full border-4 ${isNightMode ? 'border-gray-700' : 'border-gray-200'} border-opacity-30`} />
                                 {/* Progress Arc */}
@@ -466,11 +498,11 @@ const LoadingScreen = () => {
                                 </motion.div>
                             </motion.div>
 
-                             {/* Loading Message */}
+                            {/* Loading Message */}
                             <motion.p
-                                 variants={itemVariants}
-                                 key={currentMessage} // Animate message change
-                                 className={`text-base sm:text-lg ${isNightMode ? 'text-purple-300 opacity-90' : 'text-purple-600 opacity-90'} font-medium text-center h-6`} // Fixed height to prevent layout shifts
+                                variants={itemVariants}
+                                key={currentMessage} // Animate message change
+                                className={`text-base sm:text-lg ${isNightMode ? 'text-purple-300 opacity-90' : 'text-purple-600 opacity-90'} font-medium text-center h-6`} // Fixed height to prevent layout shifts
                                 initial={{ opacity: 0, y: 5 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3, ease: "easeOut" }}
@@ -480,35 +512,35 @@ const LoadingScreen = () => {
 
                         </motion.div>
                     ) : (
-                         // --- Name Input Form ---
+                        // --- Name Input Form ---
                         <motion.form
-                             key="nameInputForm"
-                             onSubmit={handleSubmit}
-                             className={`w-full max-w-sm ${isNightMode ? 'bg-slate-800 bg-opacity-60' : 'bg-white bg-opacity-70'} backdrop-filter backdrop-blur-lg rounded-3xl p-6 sm:p-8 shadow-xl border ${isNightMode ? 'border-purple-700 border-opacity-40' : 'border-pink-200 border-opacity-60'}`}
+                            key="nameInputForm"
+                            onSubmit={handleSubmit}
+                            className={`w-full max-w-sm ${isNightMode ? 'bg-slate-800 bg-opacity-60' : 'bg-white bg-opacity-70'} backdrop-filter backdrop-blur-lg rounded-3xl p-6 sm:p-8 shadow-xl border ${isNightMode ? 'border-purple-700 border-opacity-40' : 'border-pink-200 border-opacity-60'}`}
                             initial={{ opacity: 0, y: 20, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -20, scale: 0.95 }} // Exit animation for the form
                             transition={{ duration: TRANSITION_DURATION_FORM, ease: "easeOut" }}
                         >
-                             {/* Form Header */}
-                             <motion.div
-                                 className="text-center mb-6"
+                            {/* Form Header */}
+                            <motion.div
+                                className="text-center mb-6"
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-                             >
-                                 <motion.div
-                                     className="text-3xl mb-2 inline-block"
-                                     animate={{ rotate: [-5, 5, -5], scale: [1, 1.05, 1] }}
-                                     transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                                 >
-                                     👋
-                                 </motion.div>
+                            >
+                                <motion.div
+                                    className="text-3xl mb-2 inline-block"
+                                    animate={{ rotate: [-5, 5, -5], scale: [1, 1.05, 1] }}
+                                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                                >
+                                    👋
+                                </motion.div>
                                 <h2 className={`text-xl sm:text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r ${isNightMode ? 'from-pink-300 to-purple-300' : 'from-pink-500 to-purple-600'}`}>
-                                     Welcome! What's your name?
-                                 </h2>
-                             </motion.div>
+                                    Welcome! What's your name?
+                                </h2>
+                            </motion.div>
 
                             {/* Input Field */}
-                             <motion.div
+                            <motion.div
                                 className="relative mb-6"
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
                             >
@@ -524,19 +556,19 @@ const LoadingScreen = () => {
                                 {/* Maybe a subtle input icon if desired */}
                             </motion.div>
 
-                             {/* Submit Button */}
+                            {/* Submit Button */}
                             <motion.button
-                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-                                 type="submit"
-                                 className={`w-full py-3 px-6 bg-gradient-to-r ${isNightMode ? 'from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500' : 'from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600'} text-white font-semibold rounded-xl focus:outline-none focus:ring-2 ${isNightMode ? 'focus:ring-indigo-400' : 'focus:ring-rose-300'} focus:ring-offset-2 ${isNightMode ? 'focus:ring-offset-slate-800' : 'focus:ring-offset-white'} shadow-md transition duration-200 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group`} // Added group for hover effect
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+                                type="submit"
+                                className={`w-full py-3 px-6 bg-gradient-to-r ${isNightMode ? 'from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500' : 'from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600'} text-white font-semibold rounded-xl focus:outline-none focus:ring-2 ${isNightMode ? 'focus:ring-indigo-400' : 'focus:ring-rose-300'} focus:ring-offset-2 ${isNightMode ? 'focus:ring-offset-slate-800' : 'focus:ring-offset-white'} shadow-md transition duration-200 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group`} // Added group for hover effect
                                 whileHover={{ scale: 1.03 }}
                                 whileTap={{ scale: 0.98 }}
                                 disabled={!userName.trim()}
-                             >
-                                 <span className="relative z-10">Start Chilling</span>
-                                 {/* Subtle shimmer on hover */}
+                            >
+                                <span className="relative z-10">Start Chilling</span>
+                                {/* Subtle shimmer on hover */}
                                 <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition duration-300"></div>
-                             </motion.button>
+                            </motion.button>
 
                         </motion.form>
                     )}
