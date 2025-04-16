@@ -19,21 +19,24 @@ const SongCard = ({ song }) => {
     const isActive = currentSong?.id === song.id;
     const isLiked = isSongLiked(song.id);
 
-    // Improved click outside handling
+    // Use capture phase for global click handling
     useEffect(() => {
-        const handleClickOutside = (event) => {
+        // Handler for clicks outside the menu
+        const handleOutsideClick = (e) => {
             if (showOptions && 
                 menuRef.current && 
-                !menuRef.current.contains(event.target) &&
+                !menuRef.current.contains(e.target) &&
                 optionsButtonRef.current && 
-                !optionsButtonRef.current.contains(event.target)) {
+                !optionsButtonRef.current.contains(e.target)) {
                 setShowOptions(false);
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
+        // Using capture phase (true as third parameter) to ensure our handler runs first
+        document.addEventListener('click', handleOutsideClick, true);
+        
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('click', handleOutsideClick, true);
         };
     }, [showOptions]);
 
@@ -46,6 +49,22 @@ const SongCard = ({ song }) => {
             play(song.id);
             maximizePlayer();
         }
+    };
+
+    // Isolated options button click handler
+    const handleOptionsClick = (e) => {
+        // Stop propagation to prevent parent handlers from firing
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Use state callback to ensure we're using the latest state
+        setShowOptions(prevState => !prevState);
+        
+        // Add event listener for this specific click to prevent further propagation
+        const stopClickPropagation = () => {
+            document.removeEventListener('click', stopClickPropagation, true);
+        };
+        document.addEventListener('click', stopClickPropagation, true);
     };
 
     const getCardBackground = () => {
@@ -164,16 +183,15 @@ const SongCard = ({ song }) => {
                 )}
             </motion.button>
 
-            {/* Options Menu Button */}
-            <div className="relative ml-1 flex-shrink-0">
+            {/* Options Menu Button - Use separate div for better click isolation */}
+            <div 
+                className="relative ml-1 flex-shrink-0 z-20"
+                onClick={(e) => e.stopPropagation()} // Stop propagation at the container level
+            >
                 <motion.button
                     ref={optionsButtonRef}
-                    className="p-1.5 z-20 relative"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        setShowOptions(!showOptions);
-                    }}
+                    className="p-1.5 relative"
+                    onClick={handleOptionsClick} // Use the dedicated handler
                     whileTap={{ scale: 0.9 }}
                     aria-label="More options"
                 >
@@ -182,7 +200,7 @@ const SongCard = ({ song }) => {
                     </svg>
                 </motion.button>
 
-                {/* Dropdown Menu - FIXED POSITIONING */}
+                {/* Dropdown Menu - Better positioning and event handling */}
                 <AnimatePresence>
                     {showOptions && (
                         <motion.div
@@ -199,6 +217,7 @@ const SongCard = ({ song }) => {
                             animate={{ opacity: 1, scale: 1, x: 0 }}
                             exit={{ opacity: 0, scale: 0.95, x: 5 }}
                             transition={{ duration: 0.2 }}
+                            onClick={(e) => e.stopPropagation()} // Stop propagation for the entire menu
                         >
                             {/* Simple List Menu */}
                             <div className="py-1">
@@ -211,6 +230,7 @@ const SongCard = ({ song }) => {
                                     }`}
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        e.preventDefault();
                                         togglePlaylistModal(song.id);
                                         setShowOptions(false);
                                     }}
@@ -231,6 +251,7 @@ const SongCard = ({ song }) => {
                                     }`}
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        e.preventDefault();
                                         // Share functionality
                                         setShowOptions(false);
                                     }}
