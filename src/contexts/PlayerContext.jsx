@@ -13,35 +13,63 @@ export const PlayerProvider = ({ children }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.7);
   const audioRef = useRef(null);
+  const [fallbackSongsUsed, setFallbackSongsUsed] = useState([]);
 
   useEffect(() => {
     // Initialize audio when the song changes
     if (currentSong && audioRef.current) {
-      audioRef.current.src = currentSong.file;
-      audioRef.current.load();
-      
-      if (isPlaying) {
-        audioRef.current.play().catch(error => {
-          console.error("Playback failed:", error);
-          setIsPlaying(false);
-        });
+      try {
+        // Check if the file exists
+        const songFile = currentSong.file;
+        
+        if (!songFile) {
+          console.error("Song has no file path:", currentSong.id);
+          handlePlaybackError();
+          return;
+        }
+        
+        // Check if this is a known bad file we already tried
+        if (fallbackSongsUsed.includes(currentSong.id)) {
+          console.warn("Already tried this song and failed, skipping to next:", currentSong.id);
+          next();
+          return;
+        }
+        
+        audioRef.current.src = songFile;
+        audioRef.current.load();
+        
+        if (isPlaying) {
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => {
+              console.error("Playback failed:", error);
+              handlePlaybackError();
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error loading audio:", error);
+        handlePlaybackError();
       }
     }
-  }, [currentSong]);
+  }, [currentSong, fallbackSongsUsed]);
 
   useEffect(() => {
     // Handle play/pause
-    if (audioRef.current) {
+    if (audioRef.current && currentSong) {
       if (isPlaying) {
-        audioRef.current.play().catch(error => {
-          console.error("Playback failed:", error);
-          setIsPlaying(false);
-        });
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error("Playback failed:", error);
+            setIsPlaying(false);
+          });
+        }
       } else {
         audioRef.current.pause();
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, currentSong]);
 
   useEffect(() => {
     // Handle volume change
@@ -49,6 +77,27 @@ export const PlayerProvider = ({ children }) => {
       audioRef.current.volume = volume;
     }
   }, [volume]);
+
+  // Handle playback errors by trying another song
+  const handlePlaybackError = () => {
+    setIsPlaying(false);
+    
+    if (currentSong) {
+      // Add this song to the list of songs that failed
+      setFallbackSongsUsed(prev => [...prev, currentSong.id]);
+      
+      // Try to play a fallback song
+      const validSongs = songs.filter(song => !fallbackSongsUsed.includes(song.id));
+      
+      if (validSongs.length > 0) {
+        // Get a random song from the valid songs
+        const randomIndex = Math.floor(Math.random() * validSongs.length);
+        setTimeout(() => {
+          play(validSongs[randomIndex].id);
+        }, 500);
+      }
+    }
+  };
 
   const setupAudioEvents = () => {
     if (audioRef.current) {
@@ -70,13 +119,27 @@ export const PlayerProvider = ({ children }) => {
       // Error event
       audioRef.current.addEventListener('error', (e) => {
         console.error('Audio error:', e);
-        setIsPlaying(false);
+        
+        // Get specific error information
+        if (audioRef.current.error) {
+          const errorCodes = [
+            'MEDIA_ERR_ABORTED',
+            'MEDIA_ERR_NETWORK',
+            'MEDIA_ERR_DECODE',
+            'MEDIA_ERR_SRC_NOT_SUPPORTED'
+          ];
+          
+          const code = audioRef.current.error.code;
+          console.error(`Audio error code: ${errorCodes[code - 1] || 'Unknown'}`);
+        }
+        
+        handlePlaybackError();
       });
     }
   };
 
+  // Setup audio element and events
   useEffect(() => {
-    // Setup audio element and events
     if (!audioRef.current) {
       audioRef.current = new Audio();
       setupAudioEvents();
@@ -92,6 +155,17 @@ export const PlayerProvider = ({ children }) => {
   }, []);
 
   const play = (songId) => {
+    // Check if we already know this song has issues
+    if (fallbackSongsUsed.includes(songId)) {
+      console.warn("Skipping known problematic song:", songId);
+      const validSongs = songs.filter(song => !fallbackSongsUsed.includes(song.id));
+      if (validSongs.length > 0) {
+        const randomIndex = Math.floor(Math.random() * validSongs.length);
+        play(validSongs[randomIndex].id);
+      }
+      return;
+    }
+
     const song = getSongById(songId);
     if (song) {
       setCurrentSong(song);
@@ -127,26 +201,58 @@ export const PlayerProvider = ({ children }) => {
   const next = () => {
     if (currentSong) {
       const currentIndex = songs.findIndex(song => song.id === currentSong.id);
-      if (currentIndex > -1 && currentIndex < songs.length - 1) {
-        // Play next song
-        play(songs[currentIndex + 1].id);
-      } else if (songs.length > 0) {
-        // Loop back to first song
-        play(songs[0].id);
+      let nextSong = null;
+      
+      // Find the next song that isn't in the fallbackSongsUsed list
+      for (let i = 1; i <= songs.length; i++) {
+        const nextIndex = (currentIndex + i) % songs.length;
+        if (!fallbackSongsUsed.includes(songs[nextIndex].id)) {
+          nextSong = songs[nextIndex];
+          break;
+        }
       }
+      
+      if (nextSong) {
+        play(nextSong.id);
+      } else {
+        // If all songs have issues, reset the fallback list and try again
+        setFallbackSongsUsed([]);
+        if (songs.length > 0) {
+          play(songs[0].id);
+        }
+      }
+    } else if (songs.length > 0) {
+      // If no current song, play the first one
+      play(songs[0].id);
     }
   };
 
   const previous = () => {
     if (currentSong) {
       const currentIndex = songs.findIndex(song => song.id === currentSong.id);
-      if (currentIndex > 0) {
-        // Play previous song
-        play(songs[currentIndex - 1].id);
-      } else if (songs.length > 0) {
-        // Loop to last song
-        play(songs[songs.length - 1].id);
+      let prevSong = null;
+      
+      // Find the previous song that isn't in the fallbackSongsUsed list
+      for (let i = 1; i <= songs.length; i++) {
+        const prevIndex = (currentIndex - i + songs.length) % songs.length;
+        if (!fallbackSongsUsed.includes(songs[prevIndex].id)) {
+          prevSong = songs[prevIndex];
+          break;
+        }
       }
+      
+      if (prevSong) {
+        play(prevSong.id);
+      } else {
+        // If all songs have issues, reset the fallback list and try again
+        setFallbackSongsUsed([]);
+        if (songs.length > 0) {
+          play(songs[songs.length - 1].id);
+        }
+      }
+    } else if (songs.length > 0) {
+      // If no current song, play the last one
+      play(songs[songs.length - 1].id);
     }
   };
 
@@ -155,7 +261,7 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const formatTime = (timeInSeconds) => {
-    if (!timeInSeconds) return '0:00';
+    if (!timeInSeconds || isNaN(timeInSeconds)) return '0:00';
     
     const minutes = Math.floor(timeInSeconds / 60);
     const seconds = Math.floor(timeInSeconds % 60);

@@ -1,29 +1,43 @@
 // src/components/common/PlaylistCard.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useApp } from '../../contexts/AppContext';
 import { albumCoverHover } from '../../animations/animations';
 import { getSongById } from '../../../src/mockMusicData';
 
 const PlaylistCard = ({ playlist, onDelete }) => {
+  const { filterSongsByPlaylist, theme } = useApp();
+  
   const handleClick = () => {
-    // Future implementation: Navigate to playlist detail view
-    console.log(`Playlist clicked: ${playlist.title}`);
+    // Navigate to playlist detail view
+    if (playlist && playlist.id) {
+      filterSongsByPlaylist(playlist.id);
+    }
   };
 
-  // Get number of songs in the playlist
-  const songCount = playlist.songs.length;
+  // Get number of songs in the playlist (with safety check)
+  const songCount = playlist && playlist.songs ? playlist.songs.length : 0;
 
   // Get total duration of the playlist
   const getDuration = () => {
+    if (!playlist || !playlist.songs || !Array.isArray(playlist.songs)) {
+      return '0:00'; // Default return if no valid songs
+    }
+    
     let totalMinutes = 0;
     let totalSeconds = 0;
 
     playlist.songs.forEach(songId => {
       const song = getSongById(songId);
-      if (song) {
-        const [minutes, seconds] = song.duration.split(':');
-        totalMinutes += parseInt(minutes);
-        totalSeconds += parseInt(seconds);
+      if (song && song.duration) {
+        const parts = song.duration.split(':');
+        if (parts.length === 2) {
+          const minutes = parseInt(parts[0]);
+          const seconds = parseInt(parts[1]);
+          
+          if (!isNaN(minutes)) totalMinutes += minutes;
+          if (!isNaN(seconds)) totalSeconds += seconds;
+        }
       }
     });
 
@@ -34,9 +48,24 @@ const PlaylistCard = ({ playlist, onDelete }) => {
     return `${totalMinutes}:${totalSeconds < 10 ? '0' : ''}${totalSeconds}`;
   };
 
+  const getBackground = () => {
+    if (theme === 'night' || theme === 'dark') return 'bg-gray-800 bg-opacity-60';
+    return 'bg-white bg-opacity-60';
+  };
+
+  const getTextColor = () => {
+    if (theme === 'night' || theme === 'dark') return 'text-gray-200';
+    return 'text-gray-800';
+  };
+
+  const getSubTextColor = () => {
+    if (theme === 'night' || theme === 'dark') return 'text-gray-400';
+    return 'text-gray-500';
+  };
+
   return (
     <motion.div 
-      className="flex items-center bg-white bg-opacity-60 rounded-xl p-3 mb-3 shadow-sm backdrop-filter backdrop-blur-sm"
+      className={`flex items-center ${getBackground()} rounded-xl p-3 mb-3 shadow-sm backdrop-filter backdrop-blur-sm`}
       whileHover={{ y: -2, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.07)" }}
       whileTap={{ scale: 0.98 }}
       onClick={handleClick}
@@ -49,18 +78,18 @@ const PlaylistCard = ({ playlist, onDelete }) => {
         whileHover="hover"
       >
         <img 
-          src={playlist.cover} 
-          alt={playlist.title} 
+          src={playlist?.cover || '/assets/album-covers/cotton-candy-dreams.png'} // Fallback cover
+          alt={playlist?.title || 'Playlist'} 
           className="w-full h-full object-cover"
         />
       </motion.div>
       
       {/* Playlist Info */}
       <div className="flex-grow min-w-0">
-        <h3 className="text-sm font-semibold text-gray-800 truncate">
-          {playlist.title}
+        <h3 className={`text-sm font-semibold ${getTextColor()} truncate`}>
+          {playlist?.title || 'Untitled Playlist'}
         </h3>
-        <p className="text-xs text-gray-500">
+        <p className={`text-xs ${getSubTextColor()}`}>
           {songCount} songs • {getDuration()}
         </p>
       </div>
@@ -68,7 +97,7 @@ const PlaylistCard = ({ playlist, onDelete }) => {
       {/* Options Button - Don't propagate click to parent */}
       {onDelete && (
         <motion.button
-          className="p-2 text-gray-400 hover:text-red-500"
+          className={`p-2 ${getSubTextColor()} hover:text-red-500`}
           whileTap={{ scale: 0.9 }}
           onClick={(e) => {
             e.stopPropagation();

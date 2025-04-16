@@ -1,6 +1,13 @@
 // src/contexts/AppContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getSongsByAlbum, getSongsByArtist, getAlbumById, getArtistById } from '../../src/mockMusicData';
+import { 
+  getSongsByAlbum, 
+  getSongsByArtist, 
+  getAlbumById, 
+  getArtistById,
+  getSongById,
+  defaultPlaylists
+} from '../../src/mockMusicData';
 
 const AppContext = createContext();
 
@@ -12,11 +19,33 @@ export const AppProvider = ({ children }) => {
   const [isPlayerMinimized, setIsPlayerMinimized] = useState(true);
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [selectedPlaylistForAdd, setSelectedPlaylistForAdd] = useState(null);
-  const [theme, setTheme] = useState('pastel'); // pastel, night, cozy, beach
+  const [theme, setTheme] = useState('pastel'); // pastel, night, cozy, dark
   const [filteredSongs, setFilteredSongs] = useState([]);
   const [filterTitle, setFilterTitle] = useState('');
-  const [filterType, setFilterType] = useState(''); // 'album' or 'artist'
+  const [filterType, setFilterType] = useState(''); // 'album', 'artist', 'playlist'
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [filterItemDetails, setFilterItemDetails] = useState(null); // For storing album/artist/playlist details
+  const [userPlaylists, setUserPlaylists] = useState([]);
+
+  // Load playlists on init
+  useEffect(() => {
+    // Try to get saved playlists from localStorage
+    const savedPlaylists = localStorage.getItem('userPlaylists');
+    if (savedPlaylists) {
+      try {
+        const parsed = JSON.parse(savedPlaylists);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setUserPlaylists(parsed);
+          return;
+        }
+      } catch (e) {
+        console.error("Error parsing saved playlists:", e);
+      }
+    }
+    
+    // Fall back to default playlists
+    setUserPlaylists(defaultPlaylists);
+  }, []);
 
   // Apply theme on change
   useEffect(() => {
@@ -56,6 +85,13 @@ export const AppProvider = ({ children }) => {
 
   const switchTab = (tab) => {
     setActiveTab(tab);
+    // Clear any filtered content when switching tabs
+    if (tab !== 'filtered') {
+      setFilteredSongs([]);
+      setFilterTitle('');
+      setFilterType('');
+      setFilterItemDetails(null);
+    }
   };
 
   const togglePlayerView = () => {
@@ -81,26 +117,53 @@ export const AppProvider = ({ children }) => {
 
   const filterSongsByAlbum = (albumId) => {
     const album = getAlbumById(albumId);
+    if (!album) return;
+    
     const songs = getSongsByAlbum(albumId);
     setFilteredSongs(songs);
     setFilterTitle(album.title);
     setFilterType('album');
+    setFilterItemDetails(album);
     setActiveTab('filtered');
   };
 
   const filterSongsByArtist = (artistId) => {
     const artist = getArtistById(artistId);
+    if (!artist) return;
+    
     const songs = getSongsByArtist(artistId);
     setFilteredSongs(songs);
     setFilterTitle(artist.name);
     setFilterType('artist');
+    setFilterItemDetails(artist);
     setActiveTab('filtered');
+  };
+
+  const filterSongsByPlaylist = (playlistId) => {
+    // Find the playlist in our state or default playlists
+    const playlist = userPlaylists.find(p => p.id === playlistId);
+    
+    if (playlist) {
+      // Get the actual song objects from the IDs
+      const playlistSongs = playlist.songs
+        .map(songId => getSongById(songId))
+        .filter(Boolean); // Filter out any undefined songs
+        
+      setFilteredSongs(playlistSongs);
+      setFilterTitle(playlist.title);
+      setFilterType('playlist');
+      setFilterItemDetails(playlist);
+      setActiveTab('filtered');
+    } else {
+      console.error("Playlist not found:", playlistId);
+    }
   };
 
   const clearFilter = () => {
     setFilteredSongs([]);
     setFilterTitle('');
     setFilterType('');
+    setFilterItemDetails(null);
     setActiveTab('songs');
   };
 
@@ -114,7 +177,9 @@ export const AppProvider = ({ children }) => {
     filteredSongs,
     filterTitle,
     filterType,
+    filterItemDetails,
     isTransitioning,
+    userPlaylists,
     navigateTo,
     switchTab,
     togglePlayerView,
@@ -125,6 +190,7 @@ export const AppProvider = ({ children }) => {
     setFilteredSongs,
     filterSongsByAlbum,
     filterSongsByArtist,
+    filterSongsByPlaylist,
     clearFilter,
   };
 

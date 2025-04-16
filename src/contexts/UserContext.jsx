@@ -1,6 +1,6 @@
 // src/contexts/UserContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
-import { defaultPlaylists } from '../../src/mockMusicData'
+import { defaultPlaylists } from '../../src/mockMusicData';
 
 const UserContext = createContext();
 
@@ -32,16 +32,31 @@ export const UserProvider = ({ children }) => {
           
           // If no user playlists, initialize with default playlists
           if (storedUserPlaylists.length > 0) {
-            setUserPlaylists(storedUserPlaylists);
+            // Make sure each playlist has songs array defined
+            const validatedPlaylists = storedUserPlaylists.map(playlist => ({
+              ...playlist,
+              songs: Array.isArray(playlist.songs) ? playlist.songs : []
+            }));
+            setUserPlaylists(validatedPlaylists);
           } else {
-            setUserPlaylists(defaultPlaylists);
-            localStorage.setItem('userPlaylists', JSON.stringify(defaultPlaylists));
+            // Ensure default playlists have songs array defined
+            const validatedDefaults = defaultPlaylists.map(playlist => ({
+              ...playlist,
+              songs: Array.isArray(playlist.songs) ? playlist.songs : []
+            }));
+            setUserPlaylists(validatedDefaults);
+            localStorage.setItem('userPlaylists', JSON.stringify(validatedDefaults));
           }
           
           setIsLoading(false);
         }, 1500); // Simulate loading delay for nice animation experience
       } catch (error) {
         console.error('Error loading user data:', error);
+        // Provide fallback default data
+        setUserPlaylists(defaultPlaylists.map(playlist => ({
+          ...playlist,
+          songs: Array.isArray(playlist.songs) ? playlist.songs : []
+        })));
         setIsLoading(false);
       }
     };
@@ -77,11 +92,12 @@ export const UserProvider = ({ children }) => {
     return likedSongs.includes(songId);
   };
 
-  const createPlaylist = (playlistName) => {
+
+const createPlaylist = (playlistName) => {
     const newPlaylist = {
       id: `playlist-${Date.now()}`,
       title: playlistName,
-      cover: '/assets/album-covers/cotton-candy-dreams.png', // Default cover
+      cover: '/assets/album-covers/playlist.jpeg', // Default cover set to rainy.png
       songs: []
     };
     
@@ -98,7 +114,7 @@ export const UserProvider = ({ children }) => {
       if (playlist.id === playlistId && !playlist.songs.includes(songId)) {
         return {
           ...playlist,
-          songs: [...playlist.songs, songId]
+          songs: [...(playlist.songs || []), songId]
         };
       }
       return playlist;
@@ -110,7 +126,7 @@ export const UserProvider = ({ children }) => {
       if (playlist.id === playlistId) {
         return {
           ...playlist,
-          songs: playlist.songs.filter(id => id !== songId)
+          songs: (playlist.songs || []).filter(id => id !== songId)
         };
       }
       return playlist;

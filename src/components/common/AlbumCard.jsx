@@ -13,6 +13,7 @@ const AlbumCard = ({ album, size = 'md' }) => {
     : { name: 'Various Artists' };
 
   const handleClick = () => {
+    // Navigate to album detail view
     filterSongsByAlbum(album.id);
   };
 
@@ -30,12 +31,12 @@ const AlbumCard = ({ album, size = 'md' }) => {
   };
 
   const getTextColor = () => {
-    if (theme === 'night') return 'text-gray-300';
+    if (theme === 'night' || theme === 'dark') return 'text-gray-300';
     return 'text-gray-800';
   };
 
   const getSubTextColor = () => {
-    if (theme === 'night') return 'text-gray-400';
+    if (theme === 'night' || theme === 'dark') return 'text-gray-400';
     return 'text-gray-500';
   };
 
