@@ -10,10 +10,14 @@ const LikedTab = () => {
   const { likedSongs } = useUser();
   
   // Get full song objects from the liked song IDs
-  const likedSongsData = likedSongs.map(songId => getSongById(songId)).filter(Boolean);
+  const likedSongsData = likedSongs.map((songId, index) => {
+    const song = getSongById(songId);
+    // Add position property to each song to help with menu positioning
+    return song ? { ...song, position: index } : null;
+  }).filter(Boolean);
 
   return (
-    <motion.div 
+    <motion.div
       className="px-4 py-2"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
