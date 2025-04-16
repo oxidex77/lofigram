@@ -6,50 +6,56 @@ import { useThemeContext } from '../contexts/ThemeContext';
 import { albums, getTrackById } from '../mockMusicData';
 
 const PlaylistEditor = ({ onClose }) => {
-  const { 
-    userPlaylists, 
-    createPlaylist, 
-    addTrackToPlaylist, 
-    removeTrackFromPlaylist, 
+  const {
+    userPlaylists,
+    createPlaylist,
+    addTrackToPlaylist,
+    removeTrackFromPlaylist,
     deletePlaylist,
     startDrag,
     dropTrack,
     draggedTrack
   } = usePlayerContext();
-  
+
   const { themeColors } = useThemeContext();
-  
+
   const [selectedPlaylist, setSelectedPlaylist] = useState(userPlaylists[0]?.id || null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
-  
+
   // Get current selected playlist
   const currentPlaylist = userPlaylists.find(p => p.id === selectedPlaylist);
-  
+
   // Filter tracks based on search query
   const filteredAlbums = albums.filter(album => {
     const matchesAlbum = album.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesArtist = album.artist.toLowerCase().includes(searchQuery.toLowerCase());
-    const hasTracks = album.tracks.some(track => 
+    const hasTracks = album.tracks.some(track =>
       track.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    
+
     return matchesAlbum || matchesArtist || hasTracks;
   });
-  
-  // Handle creating a new playlist
+
+  // Replace just this function in your PlaylistEditor.jsx
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
     if (newPlaylistName.trim()) {
-      const playlistId = createPlaylist(newPlaylistName.trim());
-      setSelectedPlaylist(playlistId);
-      setShowCreateForm(false);
+      // Disable the form during transition
+      const name = newPlaylistName.trim();
       setNewPlaylistName('');
+
+      // Create playlist with a small delay to allow animation to finish
+      setTimeout(() => {
+        const playlistId = createPlaylist(name);
+        setSelectedPlaylist(playlistId);
+        setShowCreateForm(false);
+      }, 150); // Small delay for animation to complete
     }
   };
-  
+
   // Handle deleting a playlist
   const handleDeletePlaylist = () => {
     if (confirmDelete) {
@@ -58,27 +64,27 @@ const PlaylistEditor = ({ onClose }) => {
       setConfirmDelete(null);
     }
   };
-  
+
   // Handle adding a track to playlist
   const handleAddTrack = (trackId) => {
     if (selectedPlaylist) {
       addTrackToPlaylist(selectedPlaylist, trackId);
     }
   };
-  
+
   // Handle removing a track from playlist
   const handleRemoveTrack = (trackId) => {
     if (selectedPlaylist) {
       removeTrackFromPlaylist(selectedPlaylist, trackId);
     }
   };
-  
+
   // Handle drag start
   const handleDragStart = (e, trackId) => {
     e.dataTransfer.effectAllowed = 'move';
     startDrag(trackId);
   };
-  
+
   // Handle drag over
   const handleDragOver = (e, trackId) => {
     e.preventDefault();
@@ -86,21 +92,21 @@ const PlaylistEditor = ({ onClose }) => {
     // Add a visual indicator for the drop target
     e.currentTarget.classList.add('drag-over');
   };
-  
+
   // Handle drag leave
   const handleDragLeave = (e) => {
     e.currentTarget.classList.remove('drag-over');
   };
-  
+
   // Handle drop
   const handleDrop = (e, trackId) => {
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
     dropTrack(trackId, selectedPlaylist);
   };
-  
+
   return (
-    <motion.div 
+    <motion.div
       className="playlist-editor"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -112,7 +118,7 @@ const PlaylistEditor = ({ onClose }) => {
     >
       <div className="editor-header">
         <h3>Playlist Editor</h3>
-        <motion.button 
+        <motion.button
           className="close-button"
           onClick={onClose}
           whileTap={{ scale: 0.9 }}
@@ -122,13 +128,13 @@ const PlaylistEditor = ({ onClose }) => {
           </svg>
         </motion.button>
       </div>
-      
+
       <div className="editor-content">
         {/* Playlists sidebar */}
         <div className="playlists-sidebar">
           <div className="sidebar-header">
             <h4>My Playlists</h4>
-            <motion.button 
+            <motion.button
               className="add-playlist-button"
               onClick={() => setShowCreateForm(true)}
               whileHover={{ scale: 1.1 }}
@@ -140,10 +146,10 @@ const PlaylistEditor = ({ onClose }) => {
               </svg>
             </motion.button>
           </div>
-          
+
           <AnimatePresence>
             {showCreateForm && (
-              <motion.form 
+              <motion.form
                 className="create-playlist-form"
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
@@ -158,14 +164,14 @@ const PlaylistEditor = ({ onClose }) => {
                   autoFocus
                 />
                 <div className="form-buttons">
-                  <motion.button 
+                  <motion.button
                     type="submit"
                     whileTap={{ scale: 0.95 }}
                     disabled={!newPlaylistName.trim()}
                   >
                     Create
                   </motion.button>
-                  <motion.button 
+                  <motion.button
                     type="button"
                     className="cancel-button"
                     onClick={() => {
@@ -180,7 +186,7 @@ const PlaylistEditor = ({ onClose }) => {
               </motion.form>
             )}
           </AnimatePresence>
-          
+
           <div className="playlists-list">
             {userPlaylists.length > 0 ? (
               userPlaylists.map(playlist => (
@@ -193,7 +199,7 @@ const PlaylistEditor = ({ onClose }) => {
                 >
                   <div className="playlist-name">{playlist.title}</div>
                   <div className="track-count">{playlist.tracks.length} tracks</div>
-                  <motion.button 
+                  <motion.button
                     className="delete-playlist"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -216,7 +222,7 @@ const PlaylistEditor = ({ onClose }) => {
             )}
           </div>
         </div>
-        
+
         {/* Main editor area */}
         <div className="editor-main">
           {selectedPlaylist ? (
@@ -225,7 +231,7 @@ const PlaylistEditor = ({ onClose }) => {
                 <h4>{currentPlaylist?.title}</h4>
                 <p>{currentPlaylist?.tracks.length} tracks</p>
               </div>
-              
+
               {/* Playlist tracks */}
               <div className="playlist-tracks">
                 <h5>Playlist Tracks</h5>
@@ -234,7 +240,7 @@ const PlaylistEditor = ({ onClose }) => {
                     {currentPlaylist.tracks.map((trackId, index) => {
                       const track = getTrackById(trackId);
                       if (!track) return null;
-                      
+
                       return (
                         <motion.div
                           key={trackId}
@@ -253,7 +259,7 @@ const PlaylistEditor = ({ onClose }) => {
                             <div className="track-title">{track.title}</div>
                             <div className="track-artist">{track.artist}</div>
                           </div>
-                          <motion.button 
+                          <motion.button
                             className="remove-track"
                             onClick={() => handleRemoveTrack(trackId)}
                             whileHover={{ scale: 1.1 }}
@@ -274,7 +280,7 @@ const PlaylistEditor = ({ onClose }) => {
                   </div>
                 )}
               </div>
-              
+
               {/* Search bar */}
               <div className="search-bar">
                 <svg viewBox="0 0 24 24" fill="currentColor">
@@ -287,7 +293,7 @@ const PlaylistEditor = ({ onClose }) => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 {searchQuery && (
-                  <motion.button 
+                  <motion.button
                     className="clear-search"
                     onClick={() => setSearchQuery('')}
                     whileTap={{ scale: 0.9 }}
@@ -298,7 +304,7 @@ const PlaylistEditor = ({ onClose }) => {
                   </motion.button>
                 )}
               </div>
-              
+
               {/* Library tracks */}
               <div className="library-tracks">
                 <h5>Library</h5>
@@ -313,18 +319,18 @@ const PlaylistEditor = ({ onClose }) => {
                             <p>{album.artist}</p>
                           </div>
                         </div>
-                        
+
                         {album.tracks
-                          .filter(track => 
-                            searchQuery ? 
+                          .filter(track =>
+                            searchQuery ?
                               track.title.toLowerCase().includes(searchQuery.toLowerCase()) :
                               true
                           )
                           .map(track => {
                             const isInPlaylist = currentPlaylist.tracks.includes(track.id);
-                            
+
                             return (
-                              <motion.div 
+                              <motion.div
                                 key={track.id}
                                 className={`track-item ${isInPlaylist ? 'in-playlist' : ''}`}
                                 whileHover={{ scale: 1.01 }}
@@ -333,10 +339,10 @@ const PlaylistEditor = ({ onClose }) => {
                                   <div className="track-title">{track.title}</div>
                                   <div className="track-duration">{Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}</div>
                                 </div>
-                                <motion.button 
+                                <motion.button
                                   className={`add-remove-track ${isInPlaylist ? 'remove' : 'add'}`}
-                                  onClick={() => isInPlaylist ? 
-                                    handleRemoveTrack(track.id) : 
+                                  onClick={() => isInPlaylist ?
+                                    handleRemoveTrack(track.id) :
                                     handleAddTrack(track.id)
                                   }
                                   whileHover={{ scale: 1.1 }}
@@ -373,11 +379,11 @@ const PlaylistEditor = ({ onClose }) => {
           )}
         </div>
       </div>
-      
+
       {/* Delete confirmation modal */}
       <AnimatePresence>
         {confirmDelete && (
-          <motion.div 
+          <motion.div
             className="delete-confirmation"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -387,14 +393,14 @@ const PlaylistEditor = ({ onClose }) => {
               <h5>Delete Playlist?</h5>
               <p>Are you sure you want to delete this playlist? This action cannot be undone.</p>
               <div className="dialog-buttons">
-                <motion.button 
+                <motion.button
                   className="confirm-delete"
                   onClick={handleDeletePlaylist}
                   whileTap={{ scale: 0.95 }}
                 >
                   Delete
                 </motion.button>
-                <motion.button 
+                <motion.button
                   className="cancel-delete"
                   onClick={() => setConfirmDelete(null)}
                   whileTap={{ scale: 0.95 }}
