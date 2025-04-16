@@ -12,6 +12,7 @@ export const UserProvider = ({ children }) => {
   const [likedSongs, setLikedSongs] = useState([]);
   const [userPlaylists, setUserPlaylists] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastCreatedPlaylist, setLastCreatedPlaylist] = useState(null);
 
   // Load user data from localStorage on mount
   useEffect(() => {
@@ -49,7 +50,7 @@ export const UserProvider = ({ children }) => {
           }
           
           setIsLoading(false);
-        }, 1500); // Simulate loading delay for nice animation experience
+        }, 1000); // Reduced delay for better UX but still allow for animations
       } catch (error) {
         console.error('Error loading user data:', error);
         // Provide fallback default data
@@ -92,45 +93,110 @@ export const UserProvider = ({ children }) => {
     return likedSongs.includes(songId);
   };
 
-
-const createPlaylist = (playlistName) => {
+  const createPlaylist = (playlistName) => {
+    // Generate a unique ID with a timestamp
+    const playlistId = `playlist-${Date.now()}`;
+    
     const newPlaylist = {
-      id: `playlist-${Date.now()}`,
+      id: playlistId,
       title: playlistName,
-      cover: '/assets/album-covers/playlist.jpeg', // Default cover set to rainy.png
+      cover: '/assets/album-covers/playlist.jpeg', // Default cover
       songs: []
     };
     
     setUserPlaylists(prev => [...prev, newPlaylist]);
-    return newPlaylist.id;
+    
+    // Save immediately to localStorage for better consistency
+    try {
+      const updatedPlaylists = [...userPlaylists, newPlaylist];
+      localStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
+    } catch (error) {
+      console.error('Error saving playlist:', error);
+    }
+    
+    // Track the last created playlist for feedback
+    setLastCreatedPlaylist({
+      id: playlistId,
+      title: playlistName,
+      timestamp: Date.now()
+    });
+    
+    return playlistId;
   };
 
   const deletePlaylist = (playlistId) => {
-    setUserPlaylists(prev => prev.filter(playlist => playlist.id !== playlistId));
+    setUserPlaylists(prev => {
+      const updatedPlaylists = prev.filter(playlist => playlist.id !== playlistId);
+      
+      // Save immediately to localStorage
+      try {
+        localStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
+      } catch (error) {
+        console.error('Error saving after deletion:', error);
+      }
+      
+      return updatedPlaylists;
+    });
   };
 
   const addSongToPlaylist = (playlistId, songId) => {
-    setUserPlaylists(prev => prev.map(playlist => {
-      if (playlist.id === playlistId && !playlist.songs.includes(songId)) {
-        return {
-          ...playlist,
-          songs: [...(playlist.songs || []), songId]
-        };
+    if (!playlistId || !songId) {
+      console.error('Missing playlistId or songId in addSongToPlaylist');
+      return;
+    }
+    
+    setUserPlaylists(prev => {
+      const updatedPlaylists = prev.map(playlist => {
+        if (playlist.id === playlistId && !playlist.songs.includes(songId)) {
+          return {
+            ...playlist,
+            songs: [...(playlist.songs || []), songId]
+          };
+        }
+        return playlist;
+      });
+      
+      // Save immediately to localStorage
+      try {
+        localStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
+      } catch (error) {
+        console.error('Error saving after adding song:', error);
       }
-      return playlist;
-    }));
+      
+      return updatedPlaylists;
+    });
   };
 
   const removeSongFromPlaylist = (playlistId, songId) => {
-    setUserPlaylists(prev => prev.map(playlist => {
-      if (playlist.id === playlistId) {
-        return {
-          ...playlist,
-          songs: (playlist.songs || []).filter(id => id !== songId)
-        };
+    if (!playlistId || !songId) {
+      console.error('Missing playlistId or songId in removeSongFromPlaylist');
+      return;
+    }
+    
+    setUserPlaylists(prev => {
+      const updatedPlaylists = prev.map(playlist => {
+        if (playlist.id === playlistId) {
+          return {
+            ...playlist,
+            songs: (playlist.songs || []).filter(id => id !== songId)
+          };
+        }
+        return playlist;
+      });
+      
+      // Save immediately to localStorage
+      try {
+        localStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
+      } catch (error) {
+        console.error('Error saving after removing song:', error);
       }
-      return playlist;
-    }));
+      
+      return updatedPlaylists;
+    });
+  };
+
+  const clearLastCreatedPlaylist = () => {
+    setLastCreatedPlaylist(null);
   };
 
   const value = {
@@ -139,13 +205,14 @@ const createPlaylist = (playlistName) => {
     likedSongs,
     userPlaylists,
     isLoading,
+    lastCreatedPlaylist,
     completeProfile,
-    toggleLikeSong,
-    isSongLiked,
+    toggleLikeSong,isSongLiked,
     createPlaylist,
     deletePlaylist,
     addSongToPlaylist,
-    removeSongFromPlaylist
+    removeSongFromPlaylist,
+    clearLastCreatedPlaylist
   };
 
   return (

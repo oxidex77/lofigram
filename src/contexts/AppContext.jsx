@@ -26,6 +26,12 @@ export const AppProvider = ({ children }) => {
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [filterItemDetails, setFilterItemDetails] = useState(null); // For storing album/artist/playlist details
     const [userPlaylists, setUserPlaylists] = useState([]);
+    const [lastPlaylistAction, setLastPlaylistAction] = useState({
+        type: null, // 'created', 'deleted', 'updated'
+        playlistId: null,
+        playlistName: null,
+        timestamp: null
+    });
 
     // Load playlists on init
     useEffect(() => {
@@ -84,11 +90,11 @@ export const AppProvider = ({ children }) => {
         // Normalize search query (lowercase for case-insensitive search)
         const searchTerm = query.toLowerCase().trim();
 
-        // Import these at the top of the file if needed
-        // import { allSongs, allAlbums, allArtists } from '../../src/mockMusicData';
+        // Import from mockMusicData.js
+        const { songs } = require('../../src/mockMusicData');
 
         // Search across songs, albums, and artists
-        const matchedSongs = allSongs.filter(song =>
+        const matchedSongs = songs.filter(song =>
             song.title.toLowerCase().includes(searchTerm) ||
             getArtistById(song.artist)?.name.toLowerCase().includes(searchTerm) ||
             getAlbumById(song.album)?.title.toLowerCase().includes(searchTerm)
@@ -132,8 +138,14 @@ export const AppProvider = ({ children }) => {
     };
 
     const togglePlaylistModal = (songId = null) => {
-        setShowPlaylistModal(!showPlaylistModal);
-        setSelectedPlaylistForAdd(songId);
+        // Always set both states to ensure consistency
+        if (showPlaylistModal) {
+            setShowPlaylistModal(false);
+            setSelectedPlaylistForAdd(null);
+        } else {
+            setShowPlaylistModal(true);
+            setSelectedPlaylistForAdd(songId);
+        }
     };
 
     const changeTheme = (newTheme) => {
@@ -164,13 +176,26 @@ export const AppProvider = ({ children }) => {
         setActiveTab('filtered');
     };
 
+    // Updated to get playlists from localStorage directly to ensure freshness
     const filterSongsByPlaylist = (playlistId) => {
-        // Find the playlist in our state or default playlists
-        const playlist = userPlaylists.find(p => p.id === playlistId);
+        // Get the latest playlists from localStorage
+        let playlists = [];
+        try {
+            const storedPlaylists = localStorage.getItem('userPlaylists');
+            if (storedPlaylists) {
+                playlists = JSON.parse(storedPlaylists);
+            }
+        } catch (error) {
+            console.error("Error loading playlists:", error);
+            playlists = userPlaylists; // Fallback to state
+        }
+
+        // Find the playlist
+        const playlist = playlists.find(p => p.id === playlistId);
 
         if (playlist) {
             // Get the actual song objects from the IDs
-            const playlistSongs = playlist.songs
+            const playlistSongs = (playlist.songs || [])
                 .map(songId => getSongById(songId))
                 .filter(Boolean); // Filter out any undefined songs
 
@@ -192,6 +217,16 @@ export const AppProvider = ({ children }) => {
         setActiveTab('songs');
     };
 
+    // New function to track playlist actions
+    const trackPlaylistAction = (type, playlistId, playlistName) => {
+        setLastPlaylistAction({
+            type,
+            playlistId,
+            playlistName,
+            timestamp: Date.now()
+        });
+    };
+
     const value = {
         currentScreen,
         activeTab,
@@ -205,6 +240,7 @@ export const AppProvider = ({ children }) => {
         filterItemDetails,
         isTransitioning,
         userPlaylists,
+        lastPlaylistAction,
         navigateTo,
         switchTab,
         togglePlayerView,
@@ -213,11 +249,14 @@ export const AppProvider = ({ children }) => {
         togglePlaylistModal,
         changeTheme,
         setFilteredSongs,
+        setFilterTitle,
+        setFilterType,
         filterSongsByAlbum,
         filterSongsByArtist,
         filterSongsByPlaylist,
         clearFilter,
         searchMusic,
+        trackPlaylistAction,
     };
 
     return (

@@ -1,5 +1,5 @@
 // src/components/screens/tabs/PlaylistsTab.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../../../contexts/UserContext';
 import { useApp } from '../../../contexts/AppContext';
@@ -7,10 +7,31 @@ import PlaylistCard from '../../common/PlaylistCard';
 import { staggerContainer, staggerItem } from '../../../animations/animations';
 
 const PlaylistsTab = () => {
-  const { userPlaylists, createPlaylist, deletePlaylist } = useUser();
+  const { userPlaylists, createPlaylist, deletePlaylist, lastCreatedPlaylist } = useUser();
   const { theme } = useApp();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [showCreationFeedback, setShowCreationFeedback] = useState(false);
+  const [createdPlaylistInfo, setCreatedPlaylistInfo] = useState(null);
+  
+  // Handle showing creation feedback when a new playlist is created
+  useEffect(() => {
+    if (lastCreatedPlaylist && lastCreatedPlaylist.timestamp) {
+      // Only show feedback for playlists created in the last 2 seconds
+      const timeSinceCreation = Date.now() - lastCreatedPlaylist.timestamp;
+      if (timeSinceCreation < 2000) {
+        setCreatedPlaylistInfo(lastCreatedPlaylist);
+        setShowCreationFeedback(true);
+        
+        // Hide the feedback after 3 seconds
+        const timer = setTimeout(() => {
+          setShowCreationFeedback(false);
+        }, 3000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [lastCreatedPlaylist, userPlaylists]);
 
   const handleCreatePlaylist = (e) => {
     e.preventDefault();
@@ -42,6 +63,11 @@ const PlaylistsTab = () => {
     return 'text-gray-600';
   };
 
+  const getHighlightColor = () => {
+    if (theme === 'night' || theme === 'dark') return 'bg-purple-700 bg-opacity-40';
+    return 'bg-purple-200 bg-opacity-60';
+  };
+
   return (
     <motion.div 
       className="px-4 py-2" 
@@ -55,7 +81,7 @@ const PlaylistsTab = () => {
           Your Playlists
         </h2>
         
-        {/* Create Playlist Button (Visible instead of FAB) */}
+        {/* Create Playlist Button */}
         <motion.button
           className={`px-3 py-1.5 text-sm rounded-full bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-sm flex items-center`}
           whileTap={{ scale: 0.95 }}
@@ -67,6 +93,31 @@ const PlaylistsTab = () => {
           Create
         </motion.button>
       </div>
+      
+      {/* Creation feedback animation */}
+      <AnimatePresence>
+        {showCreationFeedback && createdPlaylistInfo && (
+          <motion.div
+            className={`mb-4 rounded-lg p-4 ${getHighlightColor()} flex items-center`}
+            initial={{ opacity: 0, height: 0, y: -20 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          >
+            <div className="mr-3 bg-gradient-to-r from-pink-400 to-purple-500 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h3 className={`font-medium ${getTextColor()}`}>Playlist Created!</h3>
+              <p className={`text-sm ${getSubTextColor()}`}>
+                "{createdPlaylistInfo.title}" has been added to your playlists
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Show message if no playlists */}
       {userPlaylists.length === 0 && (
@@ -94,14 +145,35 @@ const PlaylistsTab = () => {
           initial="hidden"
           animate="visible"
         >
-          {userPlaylists.map(playlist => (
-            <motion.div key={playlist.id} variants={staggerItem}>
-              <PlaylistCard 
-                playlist={playlist} 
-                onDelete={handleDeletePlaylist} 
-              />
-            </motion.div>
-          ))}
+          {userPlaylists.map(playlist => {
+            // Check if this is the newly created playlist
+            const isNewlyCreated = lastCreatedPlaylist && 
+                                  lastCreatedPlaylist.id === playlist.id && 
+                                  Date.now() - lastCreatedPlaylist.timestamp < 2000;
+            
+            return (
+              <motion.div 
+                key={playlist.id} 
+                variants={staggerItem}
+                className={isNewlyCreated ? 'relative' : ''}
+              >
+                {/* Highlight effect for newly created playlist */}
+                {isNewlyCreated && (
+                  <motion.div 
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-pink-400 to-purple-500"
+                    initial={{ opacity: 0.7, scale: 1.05 }}
+                    animate={{ opacity: 0, scale: 1.15 }}
+                    transition={{ duration: 1.5 }}
+                  />
+                )}
+                
+                <PlaylistCard 
+                  playlist={playlist} 
+                  onDelete={handleDeletePlaylist} 
+                />
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
       

@@ -9,11 +9,32 @@ const PlaylistCard = ({ playlist, onDelete }) => {
   const { filterSongsByPlaylist, theme } = useApp();
   
   const handleClick = () => {
-    // Navigate to playlist detail view
-    if (playlist && playlist.id) {
-      filterSongsByPlaylist(playlist.id);
+    // Add more robust error checking and logging
+    if (!playlist) {
+      console.error("No playlist provided to PlaylistCard");
+      return;
     }
+    
+    if (!playlist.id) {
+      console.error("Playlist has no ID:", playlist);
+      return;
+    }
+    
+    // Ensure the playlist ID is valid and passed as a string
+    const playlistId = String(playlist.id);
+    console.log("Opening playlist:", playlistId, playlist.title);
+    
+    // Add a small delay to ensure any state updates complete before navigation
+    setTimeout(() => {
+      filterSongsByPlaylist(playlistId);
+    }, 10);
   };
+
+  // Safety check for null playlist
+  if (!playlist) {
+    console.error("Null playlist provided to PlaylistCard");
+    return null;
+  }
 
   // Get number of songs in the playlist (with safety check)
   const songCount = playlist && playlist.songs ? playlist.songs.length : 0;
@@ -78,7 +99,7 @@ const PlaylistCard = ({ playlist, onDelete }) => {
         whileHover="hover"
       >
         <img 
-          src={playlist?.cover || '/assets/album-covers/cotton-candy-dreams.png'} // Fallback cover
+          src={playlist?.cover || '/assets/album-covers/playlist.jpeg'} // Default cover image
           alt={playlist?.title || 'Playlist'} 
           className="w-full h-full object-cover"
         />
