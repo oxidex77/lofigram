@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { useApp } from '../../contexts/AppContext';
 import { useUser } from '../../contexts/UserContext';
-import { getArtistById, getAlbumById } from '../../data/mockMusicData';
+import { getArtistById, getAlbumById } from '../../../src/mockMusicData';
 
 const PlayerScreen = () => {
   const { 
