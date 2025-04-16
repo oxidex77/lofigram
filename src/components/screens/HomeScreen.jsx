@@ -1,5 +1,5 @@
 // src/components/screens/HomeScreen.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../contexts/AppContext';
 import { useUser } from '../../contexts/UserContext';
@@ -18,6 +18,7 @@ const HomeScreen = () => {
   const { activeTab, showPlaylistModal, theme, isTransitioning, changeTheme } = useApp();
   const { userName } = useUser();
   const [showThemeSelector, setShowThemeSelector] = useState(false);
+  const [prevTheme, setPrevTheme] = useState(theme);
 
   // Theme options
   const themes = [
@@ -26,6 +27,17 @@ const HomeScreen = () => {
     { id: 'cozy', name: 'Cozy', emoji: '☕' },
     { id: 'dark', name: 'Dark', emoji: '✨' },
   ];
+
+  // Track previous theme for smooth transitions
+  useEffect(() => {
+    setPrevTheme(theme);
+  }, [theme]);
+
+  const handleThemeChange = (newTheme) => {
+    setPrevTheme(theme);
+    changeTheme(newTheme);
+    setShowThemeSelector(false);
+  };
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -61,10 +73,10 @@ const HomeScreen = () => {
   };
   
   const getBackground = () => {
-    if (theme === 'night') return 'bg-gradient-to-br from-indigo-900 to-purple-900';
-    if (theme === 'cozy') return 'bg-gradient-to-br from-amber-100 to-orange-200';
-    if (theme === 'dark') return 'bg-gradient-to-br from-gray-900 to-purple-900';
-    return 'bg-gradient-to-br from-pink-100 to-purple-200';
+    if (theme === 'night') return 'from-indigo-900 to-purple-900';
+    if (theme === 'cozy') return 'from-amber-100 to-orange-200';
+    if (theme === 'dark') return 'from-gray-900 to-purple-900';
+    return 'from-pink-100 to-purple-200';
   };
 
   const getTextColor = () => {
@@ -79,14 +91,14 @@ const HomeScreen = () => {
 
   return (
     <motion.div 
-      className={`flex flex-col min-h-screen ${getBackground()}`}
+      className={`flex flex-col min-h-screen bg-gradient-to-br ${getBackground()} transition-colors duration-700 ease-in-out`}
       variants={pageTransition}
       initial="hidden"
       animate="visible"
       exit="exit"
     >
       {/* Top bar with name, logo, and mascot */}
-      <div className={`sticky top-0 z-20 ${getHeaderBackground()} backdrop-filter backdrop-blur-lg shadow-sm px-4 py-3`}>
+      <div className={`sticky top-0 z-20 ${getHeaderBackground()} backdrop-filter backdrop-blur-lg shadow-sm px-4 py-3 transition-colors duration-700 ease-in-out`}>
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             {/* <motion.img 
@@ -97,10 +109,10 @@ const HomeScreen = () => {
               transition={{ duration: 0.5 }}
             /> */}
             <div>
-              <h1 className={`text-2xl font-bold ${getGradientText()} font-display`}>
+              <h1 className={`text-2xl font-bold ${getGradientText()} font-display transition-colors duration-700 ease-in-out`}>
                 Lofigram
               </h1>
-              <p className={`text-xs ${getTextColor()}`}>
+              <p className={`text-xs ${getTextColor()} transition-colors duration-700 ease-in-out`}>
                 Welcome back, {userName}
               </p>
             </div>
@@ -111,7 +123,7 @@ const HomeScreen = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowThemeSelector(!showThemeSelector)}
-              className={`md:hidden w-10 h-10 rounded-full flex items-center justify-center ${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`}
+              className={`md:hidden w-10 h-10 rounded-full flex items-center justify-center ${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'} transition-colors duration-700 ease-in-out`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
@@ -127,10 +139,10 @@ const HomeScreen = () => {
                     theme === t.id 
                       ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md' 
                       : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
-                  }`}
+                  } transition-all duration-500 ease-in-out`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => changeTheme(t.id)}
+                  onClick={() => handleThemeChange(t.id)}
                 >
                   {t.emoji}
                 </motion.button>
@@ -153,7 +165,7 @@ const HomeScreen = () => {
       <AnimatePresence>
         {showThemeSelector && (
           <motion.div 
-            className={`md:hidden sticky top-16 z-15 ${getHeaderBackground()} backdrop-filter backdrop-blur-lg px-4 py-2`}
+            className={`md:hidden sticky top-16 z-15 ${getHeaderBackground()} backdrop-filter backdrop-blur-lg px-4 py-2 transition-colors duration-700 ease-in-out`}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -167,12 +179,9 @@ const HomeScreen = () => {
                     theme === t.id 
                       ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md' 
                       : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
-                  }`}
+                  } transition-all duration-500 ease-in-out`}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => {
-                    changeTheme(t.id);
-                    setShowThemeSelector(false);
-                  }}
+                  onClick={() => handleThemeChange(t.id)}
                 >
                   {t.emoji}
                 </motion.button>
@@ -183,7 +192,7 @@ const HomeScreen = () => {
       </AnimatePresence>
 
       {/* Tab Navigation */}
-      <div className={`sticky ${showThemeSelector ? 'top-32' : 'top-16'} z-10 ${getTabsBackground()} backdrop-filter backdrop-blur-md`}>
+      <div className={`sticky ${showThemeSelector ? 'top-32' : 'top-16'} z-10 ${getTabsBackground()} backdrop-filter backdrop-blur-md transition-colors duration-700 ease-in-out`}>
         <TabNavigation />
       </div>
 
@@ -226,13 +235,13 @@ const HomeScreen = () => {
 
       {/* Background decorative elements */}
       <motion.div 
-        className={`fixed top-1/4 right-0 w-24 h-24 ${theme === 'night' || theme === 'dark' ? 'bg-indigo-500' : 'bg-pink-200'} rounded-full blur-3xl opacity-30 z-0`}
+        className={`fixed top-1/4 right-0 w-24 h-24 ${theme === 'night' || theme === 'dark' ? 'bg-indigo-500' : 'bg-pink-200'} rounded-full blur-3xl opacity-30 z-0 transition-colors duration-700 ease-in-out`}
         initial={{ x: 100 }}
         animate={{ x: 0 }}
         transition={{ duration: 10, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
       />
       <motion.div 
-        className={`fixed bottom-1/3 left-0 w-32 h-32 ${theme === 'night' || theme === 'dark' ? 'bg-purple-500' : 'bg-purple-200'} rounded-full blur-3xl opacity-30 z-0`}
+        className={`fixed bottom-1/3 left-0 w-32 h-32 ${theme === 'night' || theme === 'dark' ? 'bg-purple-500' : 'bg-purple-200'} rounded-full blur-3xl opacity-30 z-0 transition-colors duration-700 ease-in-out`}
         initial={{ x: -100 }}
         animate={{ x: 0 }}
         transition={{ duration: 15, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
