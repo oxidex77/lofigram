@@ -97,13 +97,13 @@ const HomeScreen = () => {
             </div>
           </div>
           <div className="flex items-center">
-            <motion.img 
+            {/* <motion.img 
               src="/assets/characters/rainy.png" 
               alt="Mascot" 
               className="w-12 h-12 object-contain mr-3 hidden sm:block"
               animate={{ y: [0, -3, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
-            />
+            /> */}
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
