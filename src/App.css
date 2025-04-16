@@ -429,3 +429,19 @@ input[type="range"]::-moz-range-thumb {
   font-family: 'Quicksand';
   font-display: swap;
 }
+
+html, body {
+  overflow-x: hidden;
+  position: relative;
+  height: 100%;
+}
+
+body.transitioning {
+  overflow: hidden;
+}
+
+.screen-container {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+}

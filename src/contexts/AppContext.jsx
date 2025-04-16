@@ -7,7 +7,7 @@ import {
     getArtistById,
     getSongById,
     defaultPlaylists
-} from '../../src/mockMusicData';
+} from '../../src/mockMusicData'; // Ensure this path is correct relative to AppContext.jsx
 
 const AppContext = createContext();
 
@@ -22,7 +22,7 @@ export const AppProvider = ({ children }) => {
     const [theme, setTheme] = useState('pastel'); // pastel, night, cozy, dark
     const [filteredSongs, setFilteredSongs] = useState([]);
     const [filterTitle, setFilterTitle] = useState('');
-    const [filterType, setFilterType] = useState(''); // 'album', 'artist', 'playlist'
+    const [filterType, setFilterType] = useState(''); // 'album', 'artist', 'playlist', 'search'
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [filterItemDetails, setFilterItemDetails] = useState(null); // For storing album/artist/playlist details
     const [userPlaylists, setUserPlaylists] = useState([]);
@@ -35,65 +35,115 @@ export const AppProvider = ({ children }) => {
 
     // Load playlists on init
     useEffect(() => {
-        // Try to get saved playlists from localStorage
         const savedPlaylists = localStorage.getItem('userPlaylists');
         if (savedPlaylists) {
             try {
                 const parsed = JSON.parse(savedPlaylists);
-                if (Array.isArray(parsed) && parsed.length > 0) {
+                // Basic validation: check if it's an array
+                if (Array.isArray(parsed)) {
                     setUserPlaylists(parsed);
-                    return;
+                    return; // Exit if loaded successfully
+                } else {
+                     console.warn("Saved playlists data is not an array, using default.");
                 }
             } catch (e) {
-                console.error("Error parsing saved playlists:", e);
+                console.error("Error parsing saved playlists, using default:", e);
             }
         }
-
-        // Fall back to default playlists
+        // Fallback or if localStorage is empty/invalid
         setUserPlaylists(defaultPlaylists);
     }, []);
+
+     // Save playlists to localStorage whenever they change
+    useEffect(() => {
+        // Avoid saving the initial default playlists if localStorage was initially empty
+        if (userPlaylists !== defaultPlaylists || !localStorage.getItem('userPlaylists')) {
+             localStorage.setItem('userPlaylists', JSON.stringify(userPlaylists));
+        }
+    }, [userPlaylists]);
+
 
     // Apply theme on change
     useEffect(() => {
         applyTheme(theme);
     }, [theme]);
 
+    // Manage body overflow during loading
+     useEffect(() => {
+        if (currentScreen === 'loading') {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto'; // Or 'visible' or ''
+        }
+        // Cleanup function to reset overflow if component unmounts unexpectedly
+        return () => {
+             document.body.style.overflow = 'auto'; // Or 'visible' or ''
+        };
+    }, [currentScreen]);
+
+
     const applyTheme = (themeName) => {
-        // Set theme colors and styles
         const bodyEl = document.body;
+        // Remove previous theme classes
+        bodyEl.classList.remove('dark-theme', 'pastel-theme', 'night-theme', 'cozy-theme', 'dark-mode-theme'); // Add all possible theme classes here
 
         switch (themeName) {
             case 'night':
                 bodyEl.style.backgroundColor = '#171626';
-                bodyEl.classList.add('dark-theme');
+                bodyEl.classList.add('night-theme', 'dark-mode-theme'); // Add specific and general dark class
                 break;
             case 'cozy':
                 bodyEl.style.backgroundColor = '#f8e9d6';
-                bodyEl.classList.remove('dark-theme');
+                bodyEl.classList.add('cozy-theme');
                 break;
             case 'dark':
                 bodyEl.style.backgroundColor = '#0f0f17';
-                bodyEl.classList.add('dark-theme');
+                bodyEl.classList.add('dark-theme', 'dark-mode-theme'); // Add specific and general dark class
                 break;
             default: // pastel
                 bodyEl.style.backgroundColor = '#fcf1f7';
-                bodyEl.classList.remove('dark-theme');
+                bodyEl.classList.add('pastel-theme');
         }
     };
 
-    const searchMusic = (query) => {
+     // Debounce search function
+    const debounce = (func, delay) => {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                func.apply(this, args);
+            }, delay);
+        };
+    };
+
+
+    const performSearch = (query) => {
         if (!query.trim()) {
             clearFilter();
             return;
         }
-
-        // Normalize search query (lowercase for case-insensitive search)
         const searchTerm = query.toLowerCase().trim();
 
-        // Import from mockMusicData.js
-        const { songs } = require('../../src/mockMusicData');
+        // Ensure mockMusicData is imported correctly
+        // NOTE: This dynamic require might not work ideally in all bundlers/setups.
+        // Consider importing 'songs' directly at the top if possible.
+        let songs = [];
+        try {
+             // Assuming mockMusicData exports { songs, albums, artists, ... }
+            const musicData = require('../../src/mockMusicData');
+            songs = musicData.songs || [];
+        } catch (e) {
+            console.error("Failed to load music data for search:", e);
+            // Handle error - maybe show a message to the user
+            setFilteredSongs([]);
+            setFilterTitle(`Error loading music data`);
+            setFilterType('error');
+            setActiveTab('filtered');
+            return;
+        }
 
-        // Search across songs, albums, and artists
+
         const matchedSongs = songs.filter(song =>
             song.title.toLowerCase().includes(searchTerm) ||
             getArtistById(song.artist)?.name.toLowerCase().includes(searchTerm) ||
@@ -106,23 +156,47 @@ export const AppProvider = ({ children }) => {
         setActiveTab('filtered');
     };
 
+    // Create a debounced version of performSearch
+    const debouncedSearch = debounce(performSearch, 300); // 300ms delay
+
+    const searchMusic = (query) => {
+         debouncedSearch(query);
+     };
+
+
     const navigateTo = (screen) => {
+        // Prevent navigation if already transitioning or navigating to the same screen
+        if (isTransitioning || currentScreen === screen) return;
+
         setIsTransitioning(true);
+        // Start transition (e.g., fade out current screen)
+
+        // Use setTimeout to allow exit animations to start
         setTimeout(() => {
             setCurrentScreen(screen);
-            setIsTransitioning(false);
-        }, 400);
+            // CRITICAL: Scroll to top AFTER the screen state has been updated
+            window.scrollTo(0, 0);
+            // Mark transition as complete slightly after screen change allows entry animations
+            // Adjust timing based on your screen transition animations
+            setTimeout(() => {
+                 setIsTransitioning(false);
+            }, 50); // Short delay after setting screen
+        }, 300); // Match this delay roughly to your exit animation duration (e.g., LoadingScreen's pageVariants.out)
     };
 
     const switchTab = (tab) => {
+        // Prevent switching to the same tab
+        if (activeTab === tab) return;
+
         setActiveTab(tab);
-        // Clear any filtered content when switching tabs
         if (tab !== 'filtered') {
             setFilteredSongs([]);
             setFilterTitle('');
             setFilterType('');
             setFilterItemDetails(null);
         }
+         // Scroll to top when switching main content tabs
+        window.scrollTo(0, 0);
     };
 
     const togglePlayerView = () => {
@@ -130,23 +204,28 @@ export const AppProvider = ({ children }) => {
     };
 
     const maximizePlayer = () => {
+        if (!isPlayerMinimized) return; // Already maximized
         setIsPlayerMinimized(false);
     };
 
     const minimizePlayer = () => {
+         if (isPlayerMinimized) return; // Already minimized
         setIsPlayerMinimized(true);
     };
 
-    const togglePlaylistModal = (songId = null) => {
-        // Always set both states to ensure consistency
-        if (showPlaylistModal) {
-            setShowPlaylistModal(false);
-            setSelectedPlaylistForAdd(null);
-        } else {
-            setShowPlaylistModal(true);
-            setSelectedPlaylistForAdd(songId);
-        }
+     const togglePlaylistModal = (songId = null) => {
+        // Using functional update for potentially rapid toggles
+        setShowPlaylistModal(prevShow => {
+            if (prevShow) {
+                 setSelectedPlaylistForAdd(null); // Clear selection when closing
+                return false;
+            } else {
+                 setSelectedPlaylistForAdd(songId); // Set selection when opening
+                return true;
+            }
+        });
     };
+
 
     const changeTheme = (newTheme) => {
         setTheme(newTheme);
@@ -160,8 +239,9 @@ export const AppProvider = ({ children }) => {
         setFilteredSongs(songs);
         setFilterTitle(album.title);
         setFilterType('album');
-        setFilterItemDetails(album);
+        setFilterItemDetails(album); // Store album details
         setActiveTab('filtered');
+        window.scrollTo(0, 0); // Scroll to top when viewing album
     };
 
     const filterSongsByArtist = (artistId) => {
@@ -172,52 +252,44 @@ export const AppProvider = ({ children }) => {
         setFilteredSongs(songs);
         setFilterTitle(artist.name);
         setFilterType('artist');
-        setFilterItemDetails(artist);
+         setFilterItemDetails(artist); // Store artist details
         setActiveTab('filtered');
+        window.scrollTo(0, 0); // Scroll to top when viewing artist
     };
 
-    // Updated to get playlists from localStorage directly to ensure freshness
     const filterSongsByPlaylist = (playlistId) => {
-        // Get the latest playlists from localStorage
-        let playlists = [];
-        try {
-            const storedPlaylists = localStorage.getItem('userPlaylists');
-            if (storedPlaylists) {
-                playlists = JSON.parse(storedPlaylists);
-            }
-        } catch (error) {
-            console.error("Error loading playlists:", error);
-            playlists = userPlaylists; // Fallback to state
-        }
-
-        // Find the playlist
-        const playlist = playlists.find(p => p.id === playlistId);
+        // Use the state which reflects the latest updates (create/delete)
+        const playlist = userPlaylists.find(p => p.id === playlistId);
 
         if (playlist) {
-            // Get the actual song objects from the IDs
             const playlistSongs = (playlist.songs || [])
                 .map(songId => getSongById(songId))
-                .filter(Boolean); // Filter out any undefined songs
+                .filter(Boolean); // Filter out null/undefined if a song was deleted
 
             setFilteredSongs(playlistSongs);
             setFilterTitle(playlist.title);
             setFilterType('playlist');
-            setFilterItemDetails(playlist);
+            setFilterItemDetails(playlist); // Store playlist details
             setActiveTab('filtered');
+             window.scrollTo(0, 0); // Scroll to top when viewing playlist
         } else {
-            console.error("Playlist not found:", playlistId);
+            console.warn("Playlist not found in state:", playlistId);
+            // Optionally navigate back or show an error
+            clearFilter();
+            setActiveTab('playlists'); // Go back to playlists tab
         }
     };
+
 
     const clearFilter = () => {
         setFilteredSongs([]);
         setFilterTitle('');
         setFilterType('');
         setFilterItemDetails(null);
-        setActiveTab('songs');
+        // Optionally switch back to a default tab like 'songs'
+        // setActiveTab('songs'); // Decide if you want this behavior
     };
 
-    // New function to track playlist actions
     const trackPlaylistAction = (type, playlistId, playlistName) => {
         setLastPlaylistAction({
             type,
@@ -226,6 +298,14 @@ export const AppProvider = ({ children }) => {
             timestamp: Date.now()
         });
     };
+
+    // Playlist Management Functions (CRUD) - To be added if needed
+    // Example:
+    // const createPlaylist = (name) => { ... setUserPlaylists(...) ... trackPlaylistAction(...) }
+    // const deletePlaylist = (id) => { ... setUserPlaylists(...) ... trackPlaylistAction(...) }
+    // const addSongToPlaylist = (playlistId, songId) => { ... setUserPlaylists(...) ... trackPlaylistAction(...) }
+    // const removeSongFromPlaylist = (playlistId, songId) => { ... setUserPlaylists(...) ... trackPlaylistAction(...) }
+
 
     const value = {
         currentScreen,
@@ -237,10 +317,10 @@ export const AppProvider = ({ children }) => {
         filteredSongs,
         filterTitle,
         filterType,
-        filterItemDetails,
+        filterItemDetails, // Make sure this is included
         isTransitioning,
-        userPlaylists,
-        lastPlaylistAction,
+        userPlaylists, // Make sure this is included
+        lastPlaylistAction, // Make sure this is included
         navigateTo,
         switchTab,
         togglePlayerView,
@@ -248,15 +328,16 @@ export const AppProvider = ({ children }) => {
         minimizePlayer,
         togglePlaylistModal,
         changeTheme,
-        setFilteredSongs,
-        setFilterTitle,
-        setFilterType,
+        setFilteredSongs, // Expose setters if needed externally
+        setFilterTitle,   // Expose setters if needed externally
+        setFilterType,    // Expose setters if needed externally
         filterSongsByAlbum,
         filterSongsByArtist,
         filterSongsByPlaylist,
         clearFilter,
         searchMusic,
-        trackPlaylistAction,
+        trackPlaylistAction, // Make sure this is included
+        // CRUD operations for playlists would be added here
     };
 
     return (
