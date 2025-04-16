@@ -46,17 +46,17 @@ const HomeScreen = () => {
     useEffect(() => {
         // Only search if there's text and search bar is open
         if (searchQuery.trim() && showSearch) {
-          // Debounce the search to avoid too many updates
-          const searchTimer = setTimeout(() => {
-            performRealTimeSearch(searchQuery);
-          }, 300); // Wait 300ms for user to finish typing
-          
-          return () => clearTimeout(searchTimer);
+            // Debounce the search to avoid too many updates
+            const searchTimer = setTimeout(() => {
+                performRealTimeSearch(searchQuery);
+            }, 300); // Wait 300ms for user to finish typing
+
+            return () => clearTimeout(searchTimer);
         } else if (!searchQuery.trim() && activeTab === 'filtered') {
-          // If search is cleared but we're still on filtered tab, return to default tab
-          switchTab('songs');
+            // If search is cleared but we're still on filtered tab, return to default tab
+            switchTab('songs');
         }
-      }, [searchQuery]);
+    }, [searchQuery]);
 
     // Track previous theme for smooth transitions
     useEffect(() => {
@@ -87,39 +87,39 @@ const HomeScreen = () => {
 
     const handleSearch = (e) => {
         if (e) e.preventDefault();
-        
+
         // When form is submitted, you might want to close the search input
         if (searchQuery.trim()) {
-          setShowSearch(false);
+            setShowSearch(false);
         }
-      };
+    };
 
     const performRealTimeSearch = (query) => {
         if (!query.trim()) return;
-        
+
         // Search across songs, albums, and artists (case-insensitive)
         const searchTerm = query.toLowerCase();
-        
+
         // Find all matching songs across titles, artist names, and album titles
-        const results = songs.filter(song => 
-          song.title.toLowerCase().includes(searchTerm) ||
-          getArtistById(song.artist)?.name.toLowerCase().includes(searchTerm) ||
-          getAlbumById(song.album)?.title.toLowerCase().includes(searchTerm)
+        const results = songs.filter(song =>
+            song.title.toLowerCase().includes(searchTerm) ||
+            getArtistById(song.artist)?.name.toLowerCase().includes(searchTerm) ||
+            getAlbumById(song.album)?.title.toLowerCase().includes(searchTerm)
         );
-        
+
         // Update filtered songs
         setFilteredSongs(results);
-        
+
         // Switch to filtered tab to show results (only if not already there)
         if (activeTab !== 'filtered') {
-          switchTab('filtered');
+            switchTab('filtered');
         }
-      };
-      
+    };
+
     //   // Then modify the original handleSearch function to handle form submission
     //   const handleSearch = (e) => {
     //     if (e) e.preventDefault();
-        
+
     //     // When form is submitted, you might want to close the search input
     //     if (searchQuery.trim()) {
     //       setShowSearch(false);
@@ -183,13 +183,17 @@ const HomeScreen = () => {
         return 'bg-white bg-opacity-50';
     };
 
+    // Modify the getBackground function to return consistent class names
     const getBackground = () => {
-        if (theme === 'night') return 'from-indigo-900 to-purple-900';
-        if (theme === 'cozy') return 'from-amber-100 to-orange-200';
-        if (theme === 'dark') return 'from-gray-900 to-purple-900';
-        return 'from-pink-100 to-purple-200';
-    };
+        // Apply a base class first
+        const baseClass = 'bg-gradient-to-br transition-colors duration-700 ease-in-out';
 
+        // Only transition the color values
+        if (theme === 'night') return `${baseClass} from-indigo-900 to-purple-900`;
+        if (theme === 'cozy') return `${baseClass} from-amber-100 to-orange-200`;
+        if (theme === 'dark') return `${baseClass} from-gray-900 to-purple-900`;
+        return `${baseClass} from-pink-100 to-purple-200`;
+    };
     const getTextColor = () => {
         if (theme === 'night' || theme === 'dark') return 'text-purple-300';
         return 'text-purple-700';
@@ -212,7 +216,7 @@ const HomeScreen = () => {
 
     return (
         <motion.div
-            className={`flex flex-col min-h-screen bg-gradient-to-br ${getBackground()} transition-colors duration-700 ease-in-out`}
+            className={`flex flex-col min-h-screen ${getBackground()}`}
             variants={pageTransition}
             initial="hidden"
             animate="visible"
@@ -341,8 +345,8 @@ const HomeScreen = () => {
                                 <motion.button
                                     key={t.id}
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-base ${theme === t.id
-                                            ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md'
-                                            : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
+                                        ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md'
+                                        : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
                                         } transition-all duration-500 ease-in-out`}
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
@@ -380,8 +384,8 @@ const HomeScreen = () => {
                                 <motion.button
                                     key={t.id}
                                     className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${theme === t.id
-                                            ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md'
-                                            : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
+                                        ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-md'
+                                        : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
                                         } transition-all duration-500 ease-in-out`}
                                     whileTap={{ scale: 0.9 }}
                                     onClick={() => handleThemeChange(t.id)}
