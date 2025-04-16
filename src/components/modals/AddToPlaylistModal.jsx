@@ -44,7 +44,7 @@ const AddToPlaylistModal = () => {
     // Close modal after short delay to show feedback
     setTimeout(() => {
       togglePlaylistModal(null);
-    }, 1000);
+    }, 3000);
   };
 
   const handleCreatePlaylist = () => {
