@@ -312,7 +312,7 @@ const LoadingScreen = () => {
                 Lofigram
               </h1>
               <p className={`text-base sm:text-lg ${isNightMode ? 'text-purple-300' : 'text-purple-500'} mt-1`}>
-                your kawaii lo-fi companion
+                your Dreamy lo-fi companion
               </p>
             </motion.div>
 
