@@ -52,6 +52,22 @@ export const albums = [
     year: '2024'
   },
   {
+    id: 'album-007',
+    title: 'Eyes',
+    cover: '/assets/album-covers/eyeshair.png',
+    artist: 'artist-003',
+    songs: ['song-001', 'song-002', 'song-003', 'song-004'],
+    year: '2024'
+  },
+  {
+    id: 'album-006',
+    title: 'Eyes',
+    cover: '/assets/album-covers/underwater.png',
+    artist: 'artist-001',
+    songs: ['song-001', 'song-002', 'song-003', 'song-004'],
+    year: '2024'
+  },
+  {
     id: 'album-003',
     title: 'Midnight Study Session',
     cover: '/assets/album-covers/study.png',

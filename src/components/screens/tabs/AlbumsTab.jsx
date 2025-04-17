@@ -38,7 +38,7 @@ const AlbumsTab = () => {
             initial="hidden"
             animate="visible"
           >
-            {albums.slice(0, 2).map(album => (
+            {albums.slice(0, 3).map(album => (
               <motion.div 
                 key={album.id} 
                 variants={staggerItem}
