@@ -27,9 +27,23 @@ const SongCard = ({ song }) => {
             }
         };
 
+        const handleMenuClosed = () => {
+            setShowOptions(false);
+            setMenuActive(false);
+        };
+
+        const handleMenuAvailable = () => {
+            optionsButtonRef.current?.blur();
+        };
+
         document.addEventListener('closeAllMenus', handleCloseAllMenus);
+        document.addEventListener('menuClosed', handleMenuClosed);
+        document.addEventListener('menuAvailable', handleMenuAvailable);
+
         return () => {
             document.removeEventListener('closeAllMenus', handleCloseAllMenus);
+            document.removeEventListener('menuClosed', handleMenuClosed);
+            document.removeEventListener('menuAvailable', handleMenuAvailable);
         };
     }, [song.id]);
 
@@ -220,7 +234,7 @@ const SongCard = ({ song }) => {
                     variants={heartVariants}
                     initial="initial"
                     animate={isLiked ? "liked" : "initial"}
-                    className="flex items-center justify-center" 
+                    className="flex items-center justify-center"
                     style={{ position: 'relative', zIndex: 10 }}
                 >
                     {isLiked ? (

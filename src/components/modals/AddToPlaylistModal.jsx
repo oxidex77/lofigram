@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../../contexts/UserContext';
 import { useApp } from '../../contexts/AppContext';
-import { getSongById } from '../../../src/mockMusicData'; 
-import { FaCheck, FaMusic, FaPlus, FaTimes, FaSpinner } from 'react-icons/fa'; 
+import { getSongById } from '../../../src/mockMusicData';
+import { FaCheck, FaMusic, FaPlus, FaTimes, FaSpinner } from 'react-icons/fa';
 
 const AddToPlaylistModal = () => {
   const { userPlaylists, addSongToPlaylist, createPlaylist } = useUser();
@@ -11,14 +11,14 @@ const AddToPlaylistModal = () => {
   const [showCreateInput, setShowCreateInput] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [isMobile, setIsMobile] = useState(false);
-  const [feedbackState, setFeedbackState] = useState(null); 
-  const [feedbackData, setFeedbackData] = useState({ name: '', songTitle: '' }); 
+  const [feedbackState, setFeedbackState] = useState(null);
+  const [feedbackData, setFeedbackData] = useState({ name: '', songTitle: '' });
   const [isVisible, setIsVisible] = useState(false);
 
-  const inputRef = useRef(null); 
+  const inputRef = useRef(null);
   const shouldCloseRef = useRef(false);
   const songRef = useRef(null);
-  
+
   // Get song info only once and store in ref to prevent re-renders
   useEffect(() => {
     if (selectedPlaylistForAdd) {
@@ -31,7 +31,7 @@ const AddToPlaylistModal = () => {
   // Detect if we should show the modal at all - using refs to prevent loops
   useEffect(() => {
     const shouldRender = !!(songRef.current || feedbackState);
-    
+
     if (shouldRender) {
       requestAnimationFrame(() => {
         setIsVisible(true);
@@ -49,15 +49,15 @@ const AddToPlaylistModal = () => {
         setIsMobile(isMobileView);
       }
     };
-    
+
     checkMobile();
-    
+
     let timeoutId;
     const handleResize = () => {
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(checkMobile, 100);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -93,10 +93,17 @@ const AddToPlaylistModal = () => {
       setFeedbackData({ name: playlist.title, songTitle: songRef.current.title });
       setFeedbackState('added');
 
+      // Add this line to clear stale event handlers
+      document.dispatchEvent(new CustomEvent('menuClosed'));
+
       setTimeout(() => {
         togglePlaylistModal(null);
-        setTimeout(() => setFeedbackState(null), 500);
-      }, 1800); 
+        setTimeout(() => {
+          setFeedbackState(null);
+          // Add this line to signal menu system is available again
+          document.dispatchEvent(new CustomEvent('menuAvailable'));
+        }, 500);
+      }, 1800);
     } catch (error) {
       console.error("Failed to add song:", error);
     }
@@ -108,7 +115,7 @@ const AddToPlaylistModal = () => {
     if (!name || !songRef.current || feedbackState === 'creating') return;
 
     setFeedbackState('creating');
-    setFeedbackData({ name: name, songTitle: songRef.current.title }); 
+    setFeedbackData({ name: name, songTitle: songRef.current.title });
 
     try {
       const playlistId = await createPlaylist(name);
@@ -119,74 +126,81 @@ const AddToPlaylistModal = () => {
         throw new Error("Playlist creation did not return an ID.");
       }
 
-      setNewPlaylistName(''); 
+      setNewPlaylistName('');
       setFeedbackState('created');
 
+      // Add the same custom events in the timeout chain
       setTimeout(() => {
         togglePlaylistModal(null);
-        setTimeout(() => setFeedbackState(null), 500);
+        setTimeout(() => {
+          setFeedbackState(null);
+          // Add this line
+          document.dispatchEvent(new CustomEvent('menuAvailable'));
+        }, 500);
       }, 2200);
     } catch (error) {
       console.error("Failed to create playlist and add song:", error);
-      setFeedbackState(null); 
-      setShowCreateInput(true); 
+      setFeedbackState(null);
+      setShowCreateInput(true);
     }
   };
 
-  // Cancel playlist creation
   const handleCancelCreate = () => {
     setShowCreateInput(false);
-    setNewPlaylistName(''); 
+    setNewPlaylistName('');
   }
 
-  // Close the modal
   const handleCloseModal = () => {
     if (feedbackState !== 'creating') {
+      document.dispatchEvent(new CustomEvent('menuClosed'));
+
       togglePlaylistModal(null);
-      setTimeout(() => setFeedbackState(null), 500);
+      setTimeout(() => {
+        setFeedbackState(null);
+        document.dispatchEvent(new CustomEvent('menuAvailable'));
+      }, 500);
     }
   }
 
-  // Memoize style generation for better performance
   const styles = useMemo(() => {
     return {
       modalPosition: showCreateInput && isMobile
         ? "fixed bottom-0 sm:bottom-auto sm:top-1/3 left-0 right-0 max-h-[70vh] sm:max-h-[60vh]"
         : "fixed bottom-0 left-0 right-0 max-h-[75vh] sm:max-h-[70vh]",
-      
+
       background: theme === 'night' || theme === 'dark'
         ? 'bg-gradient-to-b from-gray-800 to-gray-900 border-t border-gray-700'
         : 'bg-gradient-to-b from-white to-purple-50 border-t border-gray-200',
-      
+
       textColor: (intensity = 'high') => {
         if (theme === 'night' || theme === 'dark') {
           return intensity === 'high' ? 'text-gray-100' : 'text-gray-300';
         }
         return intensity === 'high' ? 'text-gray-800' : 'text-gray-600';
       },
-      
+
       subTextColor: theme === 'night' || theme === 'dark' ? 'text-gray-400' : 'text-gray-500',
-      
+
       inputBackground: theme === 'night' || theme === 'dark'
         ? 'bg-gray-700 border-gray-600 focus:border-purple-400 focus:ring-purple-400/30'
         : 'bg-white border-purple-200 focus:border-purple-400 focus:ring-purple-300/40',
-      
+
       buttonBackground: (type = 'default') => {
         if (theme === 'night' || theme === 'dark') {
           return type === 'primary'
             ? 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white'
             : type === 'secondary'
-            ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-            : 'bg-gray-800 hover:bg-gray-700 border border-gray-700'; 
+              ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+              : 'bg-gray-800 hover:bg-gray-700 border border-gray-700';
         } else {
           return type === 'primary'
             ? 'bg-gradient-to-r from-pink-400 to-purple-500 hover:from-pink-500 hover:to-purple-600 text-white'
             : type === 'secondary'
-            ? 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-            : 'bg-purple-50 hover:bg-purple-100 border border-transparent'; 
+              ? 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+              : 'bg-purple-50 hover:bg-purple-100 border border-transparent';
         }
       },
-      
+
       createButtonStyle: theme === 'night' || theme === 'dark'
         ? 'bg-transparent border-2 border-dashed border-gray-600 text-purple-400 hover:border-purple-400 hover:bg-gray-800/50'
         : 'bg-white border-2 border-dashed border-purple-300 text-purple-600 hover:border-purple-400 hover:bg-purple-50/50'
@@ -232,7 +246,7 @@ const AddToPlaylistModal = () => {
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="mb-4"
             >
-              <FaSpinner className={`w-10 h-10 ${styles.textColor('low')}`}/>
+              <FaSpinner className={`w-10 h-10 ${styles.textColor('low')}`} />
             </motion.div>
             <h3 className={`text-lg font-semibold ${styles.textColor('high')} mb-1`}>Creating Playlist...</h3>
             <p className={`${styles.subTextColor} text-sm`}>Adding "{feedbackData.songTitle}" to "{feedbackData.name}"</p>
@@ -246,7 +260,7 @@ const AddToPlaylistModal = () => {
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.4, ease: [0.17, 0.67, 0.83, 0.67] }} 
+            transition={{ duration: 0.4, ease: [0.17, 0.67, 0.83, 0.67] }}
           >
             <motion.div
               className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center mb-4 shadow-lg"
@@ -291,9 +305,9 @@ const AddToPlaylistModal = () => {
   const renderMainContent = () => (
     <motion.div
       key="main"
-      initial={{ opacity: 0 }} 
+      initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }} 
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
       <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
@@ -335,14 +349,14 @@ const AddToPlaylistModal = () => {
             {userPlaylists.map((playlist, index) => (
               <motion.button
                 key={playlist.id}
-                layoutId={`playlist-${playlist.id}`} 
+                layoutId={`playlist-${playlist.id}`}
                 className={`flex items-center w-full p-3 ${styles.buttonBackground('default')} rounded-xl transition-colors`}
-                whileTap={{ scale: 0.98 }} 
+                whileTap={{ scale: 0.98 }}
                 onClick={() => handleAddToPlaylist(playlist.id)}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  duration: 0.15, 
+                transition={{
+                  duration: 0.15,
                   delay: Math.min(0.03 * index, 0.2),
                 }}
               >
@@ -356,7 +370,7 @@ const AddToPlaylistModal = () => {
                       loading="eager"
                     />
                   ) : (
-                    <FaMusic className={`w-5 h-5 ${styles.subTextColor}`}/> 
+                    <FaMusic className={`w-5 h-5 ${styles.subTextColor}`} />
                   )}
                 </div>
                 <div className="text-left overflow-hidden">
@@ -399,7 +413,7 @@ const AddToPlaylistModal = () => {
               onChange={(e) => setNewPlaylistName(e.target.value)}
               placeholder="Enter playlist name..."
               className={`w-full px-4 py-3 rounded-xl border-2 ${styles.inputBackground} focus:outline-none focus:ring-2 ${styles.textColor('high')} placeholder-purple-400/70 dark:placeholder-gray-500 transition duration-150 ease-in-out`}
-              maxLength={50} 
+              maxLength={50}
             />
 
             <div className="flex space-x-2">
@@ -434,23 +448,23 @@ const AddToPlaylistModal = () => {
     <>
       {/* Backdrop with optimized animation */}
       <motion.div
-        className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-40" 
+        className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-40"
         variants={optimizedBackdropAnimation}
         initial="hidden"
         animate="visible"
         exit="exit"
-        onClick={handleCloseModal} 
+        onClick={handleCloseModal}
       />
 
       <motion.div
-        className={`shadow-2xl ${styles.modalPosition} ${styles.background} will-change-transform rounded-t-3xl p-5 z-50 flex flex-col`} 
+        className={`shadow-2xl ${styles.modalPosition} ${styles.background} will-change-transform rounded-t-3xl p-5 z-50 flex flex-col`}
         variants={optimizedModalAnimation}
         initial="hidden"
         animate="visible"
         exit="exit"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title" 
+        aria-labelledby="modal-title"
       >
         <AnimatePresence mode="wait" initial={false}>
           {feedbackState ? renderFeedbackContent() : renderMainContent()}
