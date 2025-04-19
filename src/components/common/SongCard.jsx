@@ -104,23 +104,16 @@ const SongCard = ({ song }) => {
     const heartVariants = {
         initial: {
             scale: 1,
-            filter: "saturate(0%) brightness(100%)",
-            color: "rgb(156, 163, 175)", // gray-400
+            color: theme === 'night' || theme === 'dark' ? "rgb(156, 163, 175)" : "rgb(156, 163, 175)", // gray-400
             transition: { duration: 0.2, ease: "easeOut" }
         },
         liked: {
-            scale: [1, 1.5, 0.8, 1.2, 1],
-            filter: [
-                "saturate(0%) brightness(100%)",
-                "saturate(100%) brightness(110%)",
-                "saturate(120%) brightness(120%)",
-                "saturate(100%) brightness(110%)"
-            ],
+            scale: [1, 1.4, 0.9, 1.15, 1],
             color: "rgb(236, 72, 153)", // pink-500
             transition: {
-                duration: 0.6,
-                ease: [0.34, 1.56, 0.64, 1], 
-                times: [0, 0.3, 0.5, 0.7, 1]
+                duration: 0.5, // Shorter duration for smoother animation
+                ease: [0.17, 0.67, 0.83, 0.67], // Optimized spring-like motion
+                times: [0, 0.2, 0.35, 0.5, 1]
             }
         }
     };
@@ -196,7 +189,6 @@ const SongCard = ({ song }) => {
                 {song.duration}
             </div>
 
-            {/* Like Button with Heart Animation */}
             <motion.button
                 aria-label="Like button"
                 className="relative ml-2 p-1.5 flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-50"
@@ -206,23 +198,23 @@ const SongCard = ({ song }) => {
                 }}
                 whileTap={{ scale: 0.9 }}
             >
-                {/* Heart Background Pulse */}
+                {/* Heart Background Pulse Effect - Optimized */}
                 <AnimatePresence>
                     {isLiked && (
                         <motion.div
                             initial={{ scale: 0, opacity: 0 }}
                             animate={{
-                                scale: [0, 1.6, 0],
-                                opacity: [0, 0.15, 0]
+                                scale: [0, 1.8, 0],
+                                opacity: [0, 0.25, 0]
                             }}
                             exit={{ opacity: 0, scale: 0 }}
-                            transition={{ duration: 0.6 }}
-                            className="absolute inset-0 bg-pink-400 rounded-full"
+                            transition={{ duration: 0.5 }}
+                            className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full"
                         />
                     )}
                 </AnimatePresence>
 
-                {/* Heart Icon with Enhanced Animation */}
+                {/* Heart Icon with Premium Animation */}
                 <motion.div
                     variants={heartVariants}
                     initial="initial"
@@ -230,36 +222,74 @@ const SongCard = ({ song }) => {
                     className="relative z-10"
                 >
                     {isLiked ? (
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                        // Solid Heart (When Liked)
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            {/* Classic Heart Shape */}
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
 
-                            <g className="heart-particles">
+                            {/* Optimized particles that won't slow down animation */}
+                            <g>
                                 {[...Array(6)].map((_, i) => (
                                     <motion.circle
                                         key={i}
-                                        r={1}
-                                        cx={10}
-                                        cy={10}
-                                        fill="none"
-                                        stroke="currentColor"
-                                        initial={{ scale: 0 }}
+                                        cx={12 + (i % 3) * 4 - 4}
+                                        cy={12 + Math.floor(i / 3) * 4 - 4}
+                                        r={0.5}
+                                        fill="#fff"
+                                        initial={{ scale: 0, opacity: 0 }}
                                         animate={isLiked ? {
                                             scale: [0, 1, 0],
-                                            x: [0, (Math.random() - 0.5) * 15],
-                                            y: [0, (Math.random() - 0.5) * 15],
+                                            opacity: [0, 0.9, 0],
+                                            x: [0, (i % 3 - 1) * 7],
+                                            y: [0, (Math.floor(i / 3) - 1) * 7],
                                         } : {}}
                                         transition={{
-                                            duration: 0.8,
-                                            delay: i * 0.05,
+                                            duration: 0.6,
+                                            delay: i * 0.04,
                                             ease: "easeOut"
+                                        }}
+                                    />
+                                ))}
+
+                                {/* Simple sparkle effect that won't compromise performance */}
+                                {[...Array(2)].map((_, i) => (
+                                    <motion.path
+                                        key={`sparkle-${i}`}
+                                        d="M12 6L13 9H16L13.5 11L14.5 14L12 12L9.5 14L10.5 11L8 9H11Z"
+                                        stroke="#fff"
+                                        strokeWidth="0.3"
+                                        fill="none"
+                                        initial={{ scale: 0, opacity: 0 }}
+                                        animate={isLiked ? {
+                                            scale: [0, 1, 0],
+                                            opacity: [0, 0.8, 0],
+                                            rotate: 0,
+                                            x: i === 0 ? -8 : 8,
+                                            y: i === 0 ? -6 : 6,
+                                        } : {}}
+                                        transition={{
+                                            duration: 0.5,
+                                            delay: 0.1 + i * 0.1,
+                                            ease: "easeOut"
+                                        }}
+                                        style={{
+                                            transformOrigin: 'center',
+                                            transformBox: 'fill-box'
                                         }}
                                     />
                                 ))}
                             </g>
                         </svg>
                     ) : (
-                        <svg className="w-5 h-5 transition-colors duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        // Outlined Heart (When Not Liked)
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
                         </svg>
                     )}
                 </motion.div>
