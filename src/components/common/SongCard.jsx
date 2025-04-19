@@ -111,8 +111,8 @@ const SongCard = ({ song }) => {
             scale: [1, 1.4, 0.9, 1.15, 1],
             color: "rgb(236, 72, 153)", // pink-500
             transition: {
-                duration: 0.5, 
-                ease: [0.17, 0.67, 0.83, 0.67], 
+                duration: 0.5,
+                ease: [0.17, 0.67, 0.83, 0.67],
                 times: [0, 0.2, 0.35, 0.5, 1]
             }
         }
@@ -197,7 +197,9 @@ const SongCard = ({ song }) => {
                     toggleLikeSong(song.id);
                 }}
                 whileTap={{ scale: 0.9 }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
+                {/* Heart Background Pulse Effect - Properly Centered */}
                 <AnimatePresence>
                     {isLiked && (
                         <motion.div
@@ -209,6 +211,7 @@ const SongCard = ({ song }) => {
                             exit={{ opacity: 0, scale: 0 }}
                             transition={{ duration: 0.5 }}
                             className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full"
+                            style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100%', height: '100%' }}
                         />
                     )}
                 </AnimatePresence>
@@ -217,7 +220,8 @@ const SongCard = ({ song }) => {
                     variants={heartVariants}
                     initial="initial"
                     animate={isLiked ? "liked" : "initial"}
-                    className="relative z-10"
+                    className="flex items-center justify-center" 
+                    style={{ position: 'relative', zIndex: 10 }}
                 >
                     {isLiked ? (
                         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
