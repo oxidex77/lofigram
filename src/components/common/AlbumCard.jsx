@@ -1,4 +1,3 @@
-// src/components/common/AlbumCard.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../../contexts/AppContext';
@@ -13,7 +12,6 @@ const AlbumCard = ({ album, size = 'md' }) => {
     : { name: 'Various Artists' };
 
   const handleClick = () => {
-    // Navigate to album detail view
     filterSongsByAlbum(album.id);
   };
 

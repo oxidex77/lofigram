@@ -1,4 +1,3 @@
-// src/components/screens/tabs/AlbumsTab.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { albums } from '../../../../src/mockMusicData';
@@ -6,7 +5,6 @@ import AlbumCard from '../../common/AlbumCard';
 import { staggerContainer, staggerItem } from '../../../animations/animations';
 
 const AlbumsTab = () => {
-  // Group albums by year
   const albumsByYear = albums.reduce((acc, album) => {
     if (!acc[album.year]) {
       acc[album.year] = [];
@@ -15,7 +13,6 @@ const AlbumsTab = () => {
     return acc;
   }, {});
 
-  // Sort years in descending order
   const sortedYears = Object.keys(albumsByYear).sort((a, b) => b - a);
 
   return (

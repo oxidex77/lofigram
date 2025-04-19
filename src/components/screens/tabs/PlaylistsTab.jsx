@@ -1,4 +1,3 @@
-// src/components/screens/tabs/PlaylistsTab.jsx
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../../../contexts/UserContext';
@@ -14,16 +13,13 @@ const PlaylistsTab = () => {
   const [showCreationFeedback, setShowCreationFeedback] = useState(false);
   const [createdPlaylistInfo, setCreatedPlaylistInfo] = useState(null);
   
-  // Handle showing creation feedback when a new playlist is created
   useEffect(() => {
     if (lastCreatedPlaylist && lastCreatedPlaylist.timestamp) {
-      // Only show feedback for playlists created in the last 2 seconds
       const timeSinceCreation = Date.now() - lastCreatedPlaylist.timestamp;
       if (timeSinceCreation < 2000) {
         setCreatedPlaylistInfo(lastCreatedPlaylist);
         setShowCreationFeedback(true);
         
-        // Hide the feedback after 3 seconds
         const timer = setTimeout(() => {
           setShowCreationFeedback(false);
         }, 3000);
@@ -81,7 +77,6 @@ const PlaylistsTab = () => {
           Your Playlists
         </h2>
         
-        {/* Create Playlist Button */}
         <motion.button
           className={`px-3 py-1.5 text-sm rounded-full bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-sm flex items-center`}
           whileTap={{ scale: 0.95 }}
@@ -94,7 +89,6 @@ const PlaylistsTab = () => {
         </motion.button>
       </div>
       
-      {/* Creation feedback animation */}
       <AnimatePresence>
         {showCreationFeedback && createdPlaylistInfo && (
           <motion.div
@@ -119,7 +113,6 @@ const PlaylistsTab = () => {
         )}
       </AnimatePresence>
       
-      {/* Show message if no playlists */}
       {userPlaylists.length === 0 && (
         <motion.div 
           className={`flex flex-col items-center justify-center py-10 px-4 ${getBackground()} rounded-xl mb-4`}
@@ -137,8 +130,7 @@ const PlaylistsTab = () => {
         </motion.div>
       )}
       
-      {/* List of playlists */}
-      <div className="mb-20"> {/* Added mb-20 to ensure content isn't cut off */}
+      <div className="mb-20"> 
         <motion.div
           className="space-y-3"
           variants={staggerContainer}
@@ -146,7 +138,6 @@ const PlaylistsTab = () => {
           animate="visible"
         >
           {userPlaylists.map(playlist => {
-            // Check if this is the newly created playlist
             const isNewlyCreated = lastCreatedPlaylist && 
                                   lastCreatedPlaylist.id === playlist.id && 
                                   Date.now() - lastCreatedPlaylist.timestamp < 2000;
@@ -157,7 +148,6 @@ const PlaylistsTab = () => {
                 variants={staggerItem}
                 className={isNewlyCreated ? 'relative' : ''}
               >
-                {/* Highlight effect for newly created playlist */}
                 {isNewlyCreated && (
                   <motion.div 
                     className="absolute inset-0 rounded-xl bg-gradient-to-r from-pink-400 to-purple-500"

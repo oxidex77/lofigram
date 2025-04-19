@@ -1,11 +1,10 @@
-// src/components/modals/AddToPlaylistModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../../contexts/UserContext';
 import { useApp } from '../../contexts/AppContext';
-import { getSongById } from '../../../src/mockMusicData'; // Adjust path if needed
-import { modalAnimation, backdropAnimation } from '../../animations/animations'; // Adjust path if needed
-import { FaCheck, FaMusic, FaHeart, FaPlus, FaTimes, FaSpinner } from 'react-icons/fa'; // Import icons
+import { getSongById } from '../../../src/mockMusicData'; 
+import { modalAnimation, backdropAnimation } from '../../animations/animations'; 
+import { FaCheck, FaMusic, FaHeart, FaPlus, FaTimes, FaSpinner } from 'react-icons/fa'; 
 
 const AddToPlaylistModal = () => {
   const { userPlaylists, addSongToPlaylist, createPlaylist } = useUser();
@@ -13,12 +12,11 @@ const AddToPlaylistModal = () => {
   const [showCreateInput, setShowCreateInput] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [isMobile, setIsMobile] = useState(false);
-  const [feedbackState, setFeedbackState] = useState(null); // null | 'creating' | 'created' | 'added'
-  const [feedbackData, setFeedbackData] = useState({ name: '', songTitle: '' }); // Store names for feedback messages
+  const [feedbackState, setFeedbackState] = useState(null); 
+  const [feedbackData, setFeedbackData] = useState({ name: '', songTitle: '' }); 
 
-  const inputRef = useRef(null); // Ref for autofocus
+  const inputRef = useRef(null); 
 
-  // Detect mobile for optimized positioning
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -26,7 +24,6 @@ const AddToPlaylistModal = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Autofocus the input when it appears
   useEffect(() => {
     if (showCreateInput && inputRef.current) {
       inputRef.current.focus();
@@ -35,21 +32,17 @@ const AddToPlaylistModal = () => {
 
   const song = getSongById(selectedPlaylistForAdd);
 
-  // Hide modal if no song selected (or song disappears)
   useEffect(() => {
       if (!song && feedbackState !== 'creating') {
           togglePlaylistModal(null);
       }
-  // Only run when song changes, don't close during creation
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [song]);
 
 
-  if (!song && !feedbackState) { // Allow showing feedback even if song disappears briefly
+  if (!song && !feedbackState) { 
     return null;
   }
 
-  // --- Handlers ---
 
   const handleAddToPlaylist = async (playlistId) => {
     if (!playlistId || !song) return;
@@ -57,21 +50,17 @@ const AddToPlaylistModal = () => {
     if (!playlist) return;
 
     try {
-      // Assuming addSongToPlaylist might become async
       await addSongToPlaylist(playlistId, song.id);
 
       setFeedbackData({ name: playlist.title, songTitle: song.title });
       setFeedbackState('added');
 
-      // Close modal after feedback
       setTimeout(() => {
         togglePlaylistModal(null);
-        // Reset feedback state after transition out
         setTimeout(() => setFeedbackState(null), 500);
-      }, 1800); // Duration for feedback visibility
+      }, 1800); 
     } catch (error) {
       console.error("Failed to add song:", error);
-      // Handle error state if needed
     }
   };
 
@@ -80,61 +69,50 @@ const AddToPlaylistModal = () => {
     if (!name || !song || feedbackState === 'creating') return;
 
     setFeedbackState('creating');
-    setFeedbackData({ name: name, songTitle: song.title }); // Store name for potential success message
+    setFeedbackData({ name: name, songTitle: song.title }); 
 
     try {
-      // Assuming createPlaylist might be async
       const playlistId = await createPlaylist(name);
 
-      // Add song after playlist is confirmed created
       if (playlistId) {
         await addSongToPlaylist(playlistId, song.id);
       } else {
-        // Handle case where playlist creation failed silently in context
         throw new Error("Playlist creation did not return an ID.");
       }
 
-      // Creation successful
-      setNewPlaylistName(''); // Clear input only on success
+      setNewPlaylistName(''); 
       setFeedbackState('created');
 
-      // Close modal after feedback
       setTimeout(() => {
         togglePlaylistModal(null);
-         // Reset feedback state after transition out
         setTimeout(() => setFeedbackState(null), 500);
       }, 2200); // Slightly longer for create feedback
 
     } catch (error) {
       console.error("Failed to create playlist and add song:", error);
-      setFeedbackState(null); // Reset state on error
-      setShowCreateInput(true); // Go back to the input field
-      // Optionally show an error message to the user here
+      setFeedbackState(null); 
+      setShowCreateInput(true); 
     }
   };
 
   const handleCancelCreate = () => {
       setShowCreateInput(false);
-      setNewPlaylistName(''); // Clear input on cancel
+      setNewPlaylistName(''); 
   }
 
   const handleCloseModal = () => {
-      // Don't close if in the middle of creating
       if (feedbackState !== 'creating') {
           togglePlaylistModal(null);
-          // Reset feedback state after transition out (safety net)
           setTimeout(() => setFeedbackState(null), 500);
       }
   }
 
-  // --- Styling ---
 
   const getModalPosition = () => {
     if (showCreateInput && isMobile) {
-      // Lift modal slightly when keyboard might appear on mobile
       return "fixed bottom-0 sm:bottom-auto sm:top-1/3 left-0 right-0 max-h-[70vh] sm:max-h-[60vh]";
     }
-    return "fixed bottom-0 left-0 right-0 max-h-[75vh] sm:max-h-[70vh]"; // Allow slightly more height
+    return "fixed bottom-0 left-0 right-0 max-h-[75vh] sm:max-h-[70vh]"; 
   };
 
   const getBackground = () => {
@@ -165,13 +143,13 @@ const AddToPlaylistModal = () => {
               ? 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white'
               : type === 'secondary'
               ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-              : 'bg-gray-800 hover:bg-gray-700 border border-gray-700'; // Playlist item bg
+              : 'bg-gray-800 hover:bg-gray-700 border border-gray-700'; 
       } else {
           return type === 'primary'
               ? 'bg-gradient-to-r from-pink-400 to-purple-500 hover:from-pink-500 hover:to-purple-600 text-white'
               : type === 'secondary'
               ? 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-              : 'bg-purple-50 hover:bg-purple-100 border border-transparent'; // Playlist item bg
+              : 'bg-purple-50 hover:bg-purple-100 border border-transparent'; 
       }
   };
 
@@ -183,7 +161,6 @@ const AddToPlaylistModal = () => {
       }
   }
 
-  // --- Feedback Content ---
   const renderFeedbackContent = () => {
     switch (feedbackState) {
       case 'creating':
@@ -215,7 +192,7 @@ const AddToPlaylistModal = () => {
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.4, ease: [0.17, 0.67, 0.83, 0.67] }} // Custom ease for vibe
+            transition={{ duration: 0.4, ease: [0.17, 0.67, 0.83, 0.67] }} 
           >
             <motion.div
               className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center mb-4 shadow-lg"
@@ -256,16 +233,14 @@ const AddToPlaylistModal = () => {
     }
   };
 
-  // --- Main Content ---
   const renderMainContent = () => (
       <motion.div
         key="main"
-        initial={{ opacity: 0 }} // Fade in main content if switching back from input
+        initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }} // Fade out main content when switching to input
+        exit={{ opacity: 0 }} // 
         transition={{ duration: 0.2 }}
       >
-        {/* Header */}
         <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
           <h3 className={`text-xl font-bold ${getTextColor()}`}>
             Add to Playlist
@@ -304,13 +279,13 @@ const AddToPlaylistModal = () => {
               {userPlaylists.map(playlist => (
                 <motion.button
                   key={playlist.id}
-                  layout // Animate layout changes smoothly
+                  layout 
                   className={`flex items-center w-full p-3 ${getButtonBackground('default')} rounded-xl transition-colors`}
-                  whileTap={{ scale: 0.98, backgroundColor: theme === 'night' || theme === 'dark' ? '#4B5563' : '#E5E7EB' }} // Theme aware tap color
+                  whileTap={{ scale: 0.98, backgroundColor: theme === 'night' || theme === 'dark' ? '#4B5563' : '#E5E7EB' }} 
                   onClick={() => handleAddToPlaylist(playlist.id)}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: (userPlaylists.indexOf(playlist) * 0.05) }} // Stagger appearance
+                  transition={{ duration: 0.2, delay: (userPlaylists.indexOf(playlist) * 0.05) }} 
                 >
                    {/* Playlist Cover/Icon */}
                    <div className={`w-10 h-10 rounded-lg overflow-hidden shadow-sm mr-3 flex-shrink-0 flex items-center justify-center ${theme === 'night' || theme === 'dark' ? 'bg-gray-700' : 'bg-purple-100'}`}>
@@ -321,7 +296,7 @@ const AddToPlaylistModal = () => {
                                className="w-full h-full object-cover"
                            />
                        ) : (
-                           <FaMusic className={`w-5 h-5 ${getSubTextColor()}`}/> // Default icon
+                           <FaMusic className={`w-5 h-5 ${getSubTextColor()}`}/> 
                        )}
                   </div>
                   <div className="text-left overflow-hidden">
@@ -348,7 +323,6 @@ const AddToPlaylistModal = () => {
               </motion.button>
             </>
           ) : (
-            // Create Input View
             <motion.div
                 key="createInput"
                 initial={{ opacity: 0, height: 0 }}
@@ -364,7 +338,7 @@ const AddToPlaylistModal = () => {
                 onChange={(e) => setNewPlaylistName(e.target.value)}
                 placeholder="Enter playlist name..."
                 className={`w-full px-4 py-3 rounded-xl border-2 ${getInputBackground()} focus:outline-none focus:ring-2 ${getTextColor()} placeholder-purple-400/70 dark:placeholder-gray-500 transition duration-150 ease-in-out`}
-                maxLength={50} // Add a sensible max length
+                maxLength={50} 
               />
 
               <div className="flex space-x-2">
@@ -396,31 +370,28 @@ const AddToPlaylistModal = () => {
   );
 
 
-  // --- Render ---
   return (
     <>
       {/* Backdrop */}
       <motion.div
-        className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-40" // Slightly darker backdrop
+        className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-40" 
         variants={backdropAnimation}
         initial="hidden"
         animate="visible"
         exit="exit"
-        onClick={handleCloseModal} // Use consolidated close handler
+        onClick={handleCloseModal} 
       />
 
-      {/* Modal Content */}
       <motion.div
-        className={`shadow-2xl ${getModalPosition()} ${getBackground()} rounded-t-3xl p-5 z-50 flex flex-col`} // Use flex-col
+        className={`shadow-2xl ${getModalPosition()} ${getBackground()} rounded-t-3xl p-5 z-50 flex flex-col`} 
         variants={modalAnimation}
         initial="hidden"
         animate="visible"
         exit="exit"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title" // Add accessibility attributes
+        aria-labelledby="modal-title" 
       >
-          {/* Use AnimatePresence to switch between main content and feedback */}
           <AnimatePresence mode="wait">
               {feedbackState ? renderFeedbackContent() : renderMainContent()}
           </AnimatePresence>
@@ -432,6 +403,4 @@ const AddToPlaylistModal = () => {
 
 export default AddToPlaylistModal;
 
-// Add this CSS for the custom scrollbar (optional but nice)
-/* In your global CSS file (e.g., index.css or App.css) */
 

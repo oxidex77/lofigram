@@ -1,4 +1,3 @@
-// src/contexts/ThemeContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   characters, 
@@ -26,24 +25,20 @@ export const ThemeProvider = ({ children }) => {
   });
   const [isLoading, setIsLoading] = useState(true);
   
-  // Set background based on time of day on initial load
   useEffect(() => {
     const timeOfDay = getTimeOfDay();
     setCurrentBackground(getBackgroundByTime(timeOfDay));
     
-    // Simulate loading time for initial animations
     setTimeout(() => {
       setIsLoading(false);
     }, 1500);
     
-    // Show welcome message based on time of day
     if (currentCharacter && currentCharacter.sayings) {
       const timeMessages = currentCharacter.sayings.timeOfDay[timeOfDay];
       if (timeMessages && timeMessages.length > 0) {
         const randomMessage = timeMessages[Math.floor(Math.random() * timeMessages.length)];
         setSpeechBubble(randomMessage);
         
-        // Hide speech bubble after 3 seconds
         setTimeout(() => {
           setSpeechBubble(null);
         }, 3000);
@@ -51,7 +46,6 @@ export const ThemeProvider = ({ children }) => {
     }
   }, []);
   
-  // Update theme colors when dark mode changes
   useEffect(() => {
     setThemeColors(prev => ({
       ...prev,
@@ -59,23 +53,21 @@ export const ThemeProvider = ({ children }) => {
     }));
   }, [isDarkMode]);
   
-  // Character message timer
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!speechBubble && Math.random() > 0.85) { // 15% chance to show a speech bubble
+      if (!speechBubble && Math.random() > 0.85) { 
         const timeOfDay = getTimeOfDay();
         const timeMessages = currentCharacter.sayings.timeOfDay[timeOfDay];
         if (timeMessages && timeMessages.length > 0) {
           const randomMessage = timeMessages[Math.floor(Math.random() * timeMessages.length)];
           setSpeechBubble(randomMessage);
           
-          // Hide speech bubble after 3 seconds
           setTimeout(() => {
             setSpeechBubble(null);
           }, 3000);
         }
       }
-    }, 30000); // Check every 30 seconds
+    }, 30000); 
     
     return () => clearInterval(interval);
   }, [currentCharacter, speechBubble]);
@@ -89,18 +81,15 @@ export const ThemeProvider = ({ children }) => {
     if (character) {
       setIsLoading(true);
       
-      // Add a small delay for transition animation
       setTimeout(() => {
         setCurrentCharacter(character);
-        setCharacterMood('happy'); // Show happy animation on character change
+        setCharacterMood('happy'); 
         
-        // Update theme colors based on character
         setThemeColors(prev => ({
           ...prev,
           primary: character.color,
         }));
         
-        // Reset to idle after showing happy animation
         setTimeout(() => {
           setCharacterMood('idle');
           setIsLoading(false);
@@ -112,7 +101,6 @@ export const ThemeProvider = ({ children }) => {
   const setCharacterReaction = (mood) => {
     setCharacterMood(mood);
     
-    // Reset to idle after a few seconds for temporary reactions
     if (mood !== 'idle' && mood !== 'secret') {
       setTimeout(() => {
         setCharacterMood('idle');
@@ -125,7 +113,6 @@ export const ThemeProvider = ({ children }) => {
     if (background) {
       setIsLoading(true);
       
-      // Add a small delay for transition animation
       setTimeout(() => {
         setCurrentBackground(background);
         setIsLoading(false);
@@ -138,7 +125,6 @@ export const ThemeProvider = ({ children }) => {
     setCurrentBackground(background);
   };
   
-  // Set theme based on track colors
   const updateThemeFromTrack = (track) => {
     if (track && track.themeColor && track.secondaryColor) {
       setThemeColors({

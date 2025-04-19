@@ -1,13 +1,9 @@
-// src/App.jsx
-// Update your App.jsx with these improved transitions
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { UserProvider } from './contexts/UserContext';
 import { PlayerProvider, usePlayer } from './contexts/PlayerContext';
 
-// Import screens
 import LoadingScreen from './components/screens/LoadingScreen';
 import ProfileScreen from './components/screens/ProfileScreen';
 import HomeScreen from './components/screens/HomeScreen';
@@ -15,18 +11,14 @@ import PlayerScreen from './components/screens/PlayerScreen';
 
 import './App.css';
 
-// Main App content component with improved transitions
 const AppContent = () => {
   const { currentScreen, isPlayerMinimized, isTransitioning } = useApp();
   const { currentSong } = usePlayer();
   const [isMobile, setIsMobile] = useState(false);
   const [isLowEndDevice, setIsLowEndDevice] = useState(false);
-  // Track if app is ready for smooth transitions
   const [isAppReady, setIsAppReady] = useState(false);
 
-  // Handle transition-related body classes
   useEffect(() => {
-    // Add this to prevent scrolling during transitions
     if (isTransitioning) {
       document.body.classList.add('transitioning');
     } else {
@@ -38,33 +30,25 @@ const AppContent = () => {
     };
   }, [isTransitioning]);
 
-  // Check for mobile and low-end devices
   useEffect(() => {
-    // Check if device is mobile
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
 
-    // Check if device is low-end
     const checkDeviceCapability = () => {
-      // Using navigator.deviceMemory if available (Chrome)
       const lowMemory = navigator.deviceMemory !== undefined && navigator.deviceMemory < 4;
 
-      // Using hardwareConcurrency as a CPU indicator
       const lowCPU = navigator.hardwareConcurrency !== undefined && navigator.hardwareConcurrency <= 4;
 
-      // Mobile + (Low memory OR Low CPU) = Low-end device
       setIsLowEndDevice(isMobile && (lowMemory || lowCPU));
     };
 
     checkMobile();
     checkDeviceCapability();
 
-    // Apply optimizations for mobile
     if (isMobile) {
       document.body.classList.add('reduce-motion');
 
-      // If very low-end device, further optimize
       if (isLowEndDevice) {
         document.body.classList.add('minimal-animations');
       }
@@ -72,9 +56,7 @@ const AppContent = () => {
       document.body.classList.remove('reduce-motion', 'minimal-animations');
     }
 
-    // Debounced resize handler
     const handleResize = () => {
-      // Wait a small amount of time before updating
       if (!window.resizeTimer) {
         window.resizeTimer = setTimeout(() => {
           window.resizeTimer = null;
@@ -85,7 +67,6 @@ const AppContent = () => {
 
     window.addEventListener('resize', handleResize);
 
-    // Mark app as ready for animations after a short delay
     const readyTimer = setTimeout(() => {
       setIsAppReady(true);
     }, 100);
@@ -99,7 +80,6 @@ const AppContent = () => {
     };
   }, [isMobile, isLowEndDevice]);
 
-  // Use a key for AnimatePresence to force clean transitions between screens
   const getScreenKey = () => {
     return `screen-${currentScreen}-${Date.now()}`;
   };
@@ -119,12 +99,10 @@ const AppContent = () => {
 
   return (
     <div className={`app-container ${isMobile ? 'mobile-app' : ''} ${isLowEndDevice ? 'low-end-device' : ''}`}>
-      {/* Main screen transitions - using custom mode and key to force clean transitions */}
       <AnimatePresence mode="wait" initial={false}>
         {renderScreen()}
       </AnimatePresence>
 
-      {/* Player screen with improved transitions */}
       <AnimatePresence>
         {currentSong && !isPlayerMinimized && (
           <PlayerScreen
@@ -143,7 +121,6 @@ const AppContent = () => {
   );
 };
 
-// Main App component with all providers
 function App() {
   return (
     <AppProvider>

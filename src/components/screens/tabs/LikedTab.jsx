@@ -1,4 +1,3 @@
-// src/components/screens/tabs/LikedTab.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useUser } from '../../../contexts/UserContext';
@@ -9,10 +8,8 @@ import { staggerContainer, staggerItem } from '../../../animations/animations';
 const LikedTab = () => {
   const { likedSongs } = useUser();
   
-  // Get full song objects from the liked song IDs
   const likedSongsData = likedSongs.map((songId, index) => {
     const song = getSongById(songId);
-    // Add position property to each song to help with menu positioning
     return song ? { ...song, position: index } : null;
   }).filter(Boolean);
 

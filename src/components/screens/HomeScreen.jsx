@@ -1,4 +1,3 @@
-// src/components/screens/HomeScreen.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../contexts/AppContext';
@@ -13,7 +12,6 @@ import LikedTab from './tabs/LikedTab';
 import PlaylistsTab from './tabs/PlaylistsTab';
 import FilteredTab from './tabs/FilteredTab';
 import AddToPlaylistModal from '../modals/AddToPlaylistModal';
-// Import your mock data directly with the correct variable names
 import { songs, albums, artists, getArtistById, getAlbumById } from '../../../src/mockMusicData';
 
 const HomeScreen = () => {
@@ -35,7 +33,6 @@ const HomeScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const searchInputRef = useRef(null);
 
-    // Theme options
     const themes = [
         { id: 'pastel', name: 'Pastel', emoji: '🌸' },
         { id: 'night', name: 'Night', emoji: '🌙' },
@@ -44,26 +41,21 @@ const HomeScreen = () => {
     ];
 
     useEffect(() => {
-        // Only search if there's text and search bar is open
         if (searchQuery.trim() && showSearch) {
-            // Debounce the search to avoid too many updates
             const searchTimer = setTimeout(() => {
                 performRealTimeSearch(searchQuery);
-            }, 300); // Wait 300ms for user to finish typing
+            }, 300); // 
 
             return () => clearTimeout(searchTimer);
         } else if (!searchQuery.trim() && activeTab === 'filtered') {
-            // If search is cleared but we're still on filtered tab, return to default tab
             switchTab('songs');
         }
     }, [searchQuery]);
 
-    // Track previous theme for smooth transitions
     useEffect(() => {
         setPrevTheme(theme);
     }, [theme]);
 
-    // Focus search input when search is shown
     useEffect(() => {
         if (showSearch && searchInputRef.current) {
             searchInputRef.current.focus();
@@ -76,19 +68,8 @@ const HomeScreen = () => {
         setShowThemeSelector(false);
     };
 
-    // // Search functionality
-    // const handleSearch = (e) => {
-    //     e.preventDefault();
-    //     if (searchQuery.trim()) {
-    //         // Using existing filtering functionality from AppContext
-    //         performSearch(searchQuery);
-    //     }
-    // };
-
     const handleSearch = (e) => {
         if (e) e.preventDefault();
-
-        // When form is submitted, you might want to close the search input
         if (searchQuery.trim()) {
             setShowSearch(false);
         }
@@ -97,56 +78,35 @@ const HomeScreen = () => {
     const performRealTimeSearch = (query) => {
         if (!query.trim()) return;
 
-        // Search across songs, albums, and artists (case-insensitive)
         const searchTerm = query.toLowerCase();
 
-        // Find all matching songs across titles, artist names, and album titles
         const results = songs.filter(song =>
             song.title.toLowerCase().includes(searchTerm) ||
             getArtistById(song.artist)?.name.toLowerCase().includes(searchTerm) ||
             getAlbumById(song.album)?.title.toLowerCase().includes(searchTerm)
         );
 
-        // Update filtered songs
         setFilteredSongs(results);
 
-        // Switch to filtered tab to show results (only if not already there)
         if (activeTab !== 'filtered') {
             switchTab('filtered');
         }
     };
 
-    //   // Then modify the original handleSearch function to handle form submission
-    //   const handleSearch = (e) => {
-    //     if (e) e.preventDefault();
-
-    //     // When form is submitted, you might want to close the search input
-    //     if (searchQuery.trim()) {
-    //       setShowSearch(false);
-    //     }
-    //   };
-    // Search implementation using existing AppContext filtering functions
-    // Search implementation using only the essential AppContext functions
     const performSearch = (query) => {
         if (!query.trim()) return;
 
-        // Search across songs, albums, and artists (case-insensitive)
         const searchTerm = query.toLowerCase();
 
-        // Find all matching songs across titles, artist names, and album titles
         const results = songs.filter(song =>
             song.title.toLowerCase().includes(searchTerm) ||
             getArtistById(song.artist)?.name.toLowerCase().includes(searchTerm) ||
             getAlbumById(song.album)?.title.toLowerCase().includes(searchTerm)
         );
-
-        // Use only the setFilteredSongs function which definitely exists
         setFilteredSongs(results);
 
-        // Switch to the filtered tab to show results
         switchTab('filtered');
 
-        // Close search input
         setShowSearch(false);
     };
 
@@ -183,9 +143,7 @@ const HomeScreen = () => {
         return 'bg-white bg-opacity-50';
     };
 
-    // Modify the getBackground function to return consistent class names
     const getBackground = () => {
-        // Apply a base class first
         const baseClass = 'bg-gradient-to-br transition-colors duration-700 ease-in-out';
 
         // Only transition the color values
@@ -225,7 +183,6 @@ const HomeScreen = () => {
             {/* Top bar with name, logo, and mascot */}
             <div className={`sticky top-0 z-20 ${getHeaderBackground()} backdrop-filter backdrop-blur-lg shadow-sm px-4 py-3 transition-colors duration-700 ease-in-out`}>
                 <div className="flex justify-between items-center">
-                    {/* Logo section - shrink when search is expanded */}
                     <div className={`flex items-center ${showSearch ? 'w-0 overflow-hidden md:w-auto md:overflow-visible' : ''}`}>
                         <div>
                             <h1 className={`text-2xl font-bold ${getGradientText()} font-display transition-colors duration-700 ease-in-out`}>
@@ -237,7 +194,6 @@ const HomeScreen = () => {
                         </div>
                     </div>
 
-                    {/* Search form - Expanded on mobile or when active */}
                     <AnimatePresence mode="wait">
                         {showSearch ? (
                             <motion.form
@@ -289,7 +245,6 @@ const HomeScreen = () => {
                             </motion.form>
                         ) : (
                             <div className="hidden md:flex md:flex-1 md:justify-center">
-                                {/* Search button for desktop */}
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
@@ -369,7 +324,6 @@ const HomeScreen = () => {
                 </div>
             </div>
 
-            {/* Mobile Theme Selector (slides down when activated) */}
             <AnimatePresence>
                 {showThemeSelector && (
                     <motion.div
@@ -403,7 +357,6 @@ const HomeScreen = () => {
                 <TabNavigation />
             </div>
 
-            {/* Tab Content */}
             <div className="flex-grow overflow-y-auto pb-20">
                 <AnimatePresence mode="wait">
                     <motion.div
@@ -419,7 +372,6 @@ const HomeScreen = () => {
                 </AnimatePresence>
             </div>
 
-            {/* Mini Player */}
             <MiniPlayer />
 
             {/* Add to Playlist Modal */}
@@ -427,7 +379,6 @@ const HomeScreen = () => {
                 {showPlaylistModal && <AddToPlaylistModal />}
             </AnimatePresence>
 
-            {/* Screen Transition Overlay */}
             <AnimatePresence>
                 {isTransitioning && (
                     <motion.div
@@ -440,7 +391,6 @@ const HomeScreen = () => {
                 )}
             </AnimatePresence>
 
-            {/* Background decorative elements */}
             <motion.div
                 className={`fixed top-1/4 right-0 w-24 h-24 ${theme === 'night' || theme === 'dark' ? 'bg-indigo-500' : 'bg-pink-200'} rounded-full blur-3xl opacity-30 z-0 transition-colors duration-700 ease-in-out`}
                 initial={{ x: 100 }}
@@ -454,20 +404,12 @@ const HomeScreen = () => {
                 transition={{ duration: 15, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
             />
 
-            {/* Small mascot decoration */}
             <motion.div
                 className="fixed bottom-24 right-4 w-16 h-16 z-10 hidden md:block"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1 }}
             >
-                {/* <motion.img
-          src="/assets/characters/rainy.png"
-          alt="Decorative Mascot"
-          className="w-full h-full object-contain"
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        /> */}
             </motion.div>
         </motion.div>
     );

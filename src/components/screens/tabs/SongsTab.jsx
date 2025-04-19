@@ -1,4 +1,3 @@
-// src/components/screens/tabs/SongsTab.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { usePlayer } from '../../../contexts/PlayerContext';
@@ -18,7 +17,6 @@ const SongsTab = () => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Trending Section */}
       <div className="mb-6">
         <h2 className="text-xl font-bold text-purple-800 mb-3">
           🔥 Trending
@@ -37,7 +35,6 @@ const SongsTab = () => {
         </motion.div>
       </div>
 
-      {/* All Songs Section */}
       <div>
         <h2 className="text-xl font-bold text-purple-800 mb-3">
           All Songs

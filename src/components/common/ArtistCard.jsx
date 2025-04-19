@@ -1,4 +1,3 @@
-// src/components/common/ArtistCard.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../../contexts/AppContext';
@@ -8,7 +7,6 @@ const ArtistCard = ({ artist }) => {
   const { filterSongsByArtist, theme } = useApp();
 
   const handleClick = () => {
-    // Navigate to artist detail view
     filterSongsByArtist(artist.id);
   };
 

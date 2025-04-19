@@ -1,4 +1,3 @@
-// src/components/screens/tabs/FilteredTab.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../../../contexts/AppContext';
@@ -42,7 +41,6 @@ const FilteredTab = () => {
 
     switch (filterType) {
       case 'album':
-        // Album header with cover, title, artist
         const albumArtist = filterItemDetails.artist !== 'Various Artists' 
           ? getArtistById(filterItemDetails.artist) 
           : { name: 'Various Artists' };
@@ -169,7 +167,6 @@ const FilteredTab = () => {
         </motion.button>
       </div>
       
-      {/* Detail Header showing album/artist/playlist info */}
       {renderDetailHeader()}
       
       {/* Songs list */}

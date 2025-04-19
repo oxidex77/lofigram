@@ -1,4 +1,3 @@
-// src/components/common/SongCard.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayer } from '../../contexts/PlayerContext';
@@ -20,7 +19,6 @@ const SongCard = ({ song }) => {
     const isActive = currentSong?.id === song.id;
     const isLiked = isSongLiked(song.id);
 
-    // Custom event listener to close all other menus when one is opened
     useEffect(() => {
         const handleCloseAllMenus = (e) => {
             if (e.detail.except !== song.id) {
@@ -35,7 +33,6 @@ const SongCard = ({ song }) => {
         };
     }, [song.id]);
 
-    // Enhanced click outside handling
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (showOptions &&
@@ -44,13 +41,11 @@ const SongCard = ({ song }) => {
                 optionsButtonRef.current &&
                 !optionsButtonRef.current.contains(event.target)) {
 
-                // Only close if we're not clicking inside the menu or button
                 setShowOptions(false);
                 setMenuActive(false);
             }
         };
 
-        // Use both mouse and touch events for better device coverage
         document.addEventListener('mousedown', handleClickOutside, true);
         document.addEventListener('touchstart', handleClickOutside, true);
 
@@ -60,14 +55,11 @@ const SongCard = ({ song }) => {
         };
     }, [showOptions]);
 
-    // Immediately set menuActive state based on showOptions
-    // This removes the delay that was causing issues
     useEffect(() => {
         setMenuActive(showOptions);
     }, [showOptions]);
 
     const handlePlayClick = (e) => {
-        // Exit early if clicking on options button or like button
         if (optionsButtonRef.current?.contains(e.target) ||
             e.target.closest('button[aria-label="Like button"]')) {
             return;
@@ -81,7 +73,6 @@ const SongCard = ({ song }) => {
         }
     };
 
-    // Theme-based styling functions
     const getCardBackground = () => {
         if (theme === 'night' || theme === 'dark') {
             return isActive
@@ -128,13 +119,12 @@ const SongCard = ({ song }) => {
             color: "rgb(236, 72, 153)", // pink-500
             transition: {
                 duration: 0.6,
-                ease: [0.34, 1.56, 0.64, 1], // Custom spring-like easing
+                ease: [0.34, 1.56, 0.64, 1], 
                 times: [0, 0.3, 0.5, 0.7, 1]
             }
         }
     };
 
-    // Determine if this is likely the first item in a list
     const isFirstInList = song.position === 0 || song.id === 1 || song.title === "Raindrops on Windowpanes";
 
     return (
@@ -243,7 +233,6 @@ const SongCard = ({ song }) => {
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
 
-                            {/* Optional: Animated particles when liked */}
                             <g className="heart-particles">
                                 {[...Array(6)].map((_, i) => (
                                     <motion.circle
@@ -276,38 +265,31 @@ const SongCard = ({ song }) => {
                 </motion.div>
             </motion.button>
 
-            {/* Options Menu Button - Fixed and Enhanced Reliability */}
             <div className="relative ml-1 flex-shrink-0">
                 <motion.button
                     ref={optionsButtonRef}
-                    // Added data-testid for easier debugging
                     data-testid={`options-button-${song.id}`}
                     className="p-1.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50"
                     onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
 
-                        // Explicitly remove focus to prevent issues with sequential clicks
                         optionsButtonRef.current?.blur();
 
-                        // Force close any open menus in other cards
                         document.dispatchEvent(new CustomEvent('closeAllMenus', {
                             detail: { except: song.id }
                         }));
 
-                        // Toggle menu state directly for better responsiveness
                         setShowOptions(prev => !prev);
                     }}
                     whileTap={{ scale: 0.9 }}
                     aria-label="More options"
                 >
-                    {/* Vertical dots icon */}
                     <svg className="w-5 h-5 text-gray-400 hover:text-gray-500 transition-colors duration-150" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                     </svg>
                 </motion.button>
 
-                {/* Dropdown Menu with Smart Positioning */}
                 <AnimatePresence>
                     {showOptions && (
                         <motion.div
@@ -316,7 +298,6 @@ const SongCard = ({ song }) => {
                             className={`absolute right-0 z-50 rounded-lg overflow-hidden ${getMenuBackground()}`}
                             style={{
                                 width: '145px',
-                                // Smart positioning based on position in list
                                 ...(isFirstInList
                                     ? {
                                         bottom: 'auto',
@@ -353,11 +334,9 @@ const SongCard = ({ song }) => {
                                 transition: { duration: 0.15 }
                             }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
-                            // Added click handler directly on menu container to prevent bubbling
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="py-1">
-                                {/* Add to Playlist option - Unchanged */}
                                 <motion.button
                                     className={`flex items-center w-full px-3 py-1.5 text-xs text-left rounded-md transition-colors duration-200 ${theme === 'night' || theme === 'dark'
                                         ? 'text-gray-200 hover:bg-gray-700/70'
@@ -377,7 +356,6 @@ const SongCard = ({ song }) => {
                                     <span className="font-medium">Add to Playlist</span>
                                 </motion.button>
 
-                                {/* Share Song button - Unchanged */}
                                 <motion.button
                                     className={`flex items-center w-full px-3 py-1.5 text-xs text-left rounded-md transition-colors duration-200 ${theme === 'night' || theme === 'dark'
                                         ? 'text-gray-200 hover:bg-gray-700/70'

@@ -1,4 +1,3 @@
-// src/components/player/ThemeToggle.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../../contexts/AppContext';
@@ -7,7 +6,6 @@ const ThemeToggle = () => {
   const { theme, changeTheme } = useApp();
   const [isMobile, setIsMobile] = useState(false);
   
-  // Detect mobile devices for optimization
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -38,7 +36,6 @@ const ThemeToggle = () => {
                 : `${theme === 'night' || theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`
             }`}
             whileTap={{ scale: 0.9 }}
-            // Reduce hover animation on mobile for performance
             whileHover={isMobile ? { scale: 1.05 } : { y: -2 }}
             onClick={() => changeTheme(t.id)}
           >

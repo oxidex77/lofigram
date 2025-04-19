@@ -1,4 +1,3 @@
-// src/contexts/UserContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import { defaultPlaylists } from '../../src/mockMusicData';
 
@@ -14,11 +13,9 @@ export const UserProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastCreatedPlaylist, setLastCreatedPlaylist] = useState(null);
 
-  // Load user data from localStorage on mount
   useEffect(() => {
     const loadUserData = () => {
       try {
-        // Simulate loading
         setTimeout(() => {
           const storedUserName = localStorage.getItem('userName');
           const storedLikedSongs = JSON.parse(localStorage.getItem('likedSongs')) || [];
@@ -31,16 +28,13 @@ export const UserProvider = ({ children }) => {
           
           setLikedSongs(storedLikedSongs);
           
-          // If no user playlists, initialize with default playlists
           if (storedUserPlaylists.length > 0) {
-            // Make sure each playlist has songs array defined
             const validatedPlaylists = storedUserPlaylists.map(playlist => ({
               ...playlist,
               songs: Array.isArray(playlist.songs) ? playlist.songs : []
             }));
             setUserPlaylists(validatedPlaylists);
           } else {
-            // Ensure default playlists have songs array defined
             const validatedDefaults = defaultPlaylists.map(playlist => ({
               ...playlist,
               songs: Array.isArray(playlist.songs) ? playlist.songs : []
@@ -50,10 +44,9 @@ export const UserProvider = ({ children }) => {
           }
           
           setIsLoading(false);
-        }, 1000); // Reduced delay for better UX but still allow for animations
+        }, 1000); 
       } catch (error) {
         console.error('Error loading user data:', error);
-        // Provide fallback default data
         setUserPlaylists(defaultPlaylists.map(playlist => ({
           ...playlist,
           songs: Array.isArray(playlist.songs) ? playlist.songs : []
@@ -65,7 +58,6 @@ export const UserProvider = ({ children }) => {
     loadUserData();
   }, []);
 
-  // Save user data to localStorage when it changes
   useEffect(() => {
     if (!isLoading) {
       localStorage.setItem('userName', userName);
@@ -94,19 +86,17 @@ export const UserProvider = ({ children }) => {
   };
 
   const createPlaylist = (playlistName) => {
-    // Generate a unique ID with a timestamp
     const playlistId = `playlist-${Date.now()}`;
     
     const newPlaylist = {
       id: playlistId,
       title: playlistName,
-      cover: '/assets/album-covers/playlist.jpeg', // Default cover
+      cover: '/assets/music-covers/playlist.jpeg', 
       songs: []
     };
     
     setUserPlaylists(prev => [...prev, newPlaylist]);
     
-    // Save immediately to localStorage for better consistency
     try {
       const updatedPlaylists = [...userPlaylists, newPlaylist];
       localStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
@@ -114,7 +104,6 @@ export const UserProvider = ({ children }) => {
       console.error('Error saving playlist:', error);
     }
     
-    // Track the last created playlist for feedback
     setLastCreatedPlaylist({
       id: playlistId,
       title: playlistName,
@@ -128,7 +117,6 @@ export const UserProvider = ({ children }) => {
     setUserPlaylists(prev => {
       const updatedPlaylists = prev.filter(playlist => playlist.id !== playlistId);
       
-      // Save immediately to localStorage
       try {
         localStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
       } catch (error) {
@@ -156,7 +144,6 @@ export const UserProvider = ({ children }) => {
         return playlist;
       });
       
-      // Save immediately to localStorage
       try {
         localStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
       } catch (error) {
@@ -184,7 +171,6 @@ export const UserProvider = ({ children }) => {
         return playlist;
       });
       
-      // Save immediately to localStorage
       try {
         localStorage.setItem('userPlaylists', JSON.stringify(updatedPlaylists));
       } catch (error) {

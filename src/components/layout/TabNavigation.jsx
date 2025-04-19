@@ -8,7 +8,6 @@ const TabNavigation = () => {
   const [showScrollHint, setShowScrollHint] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   
-  // Check if it's a mobile device
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -17,12 +16,10 @@ const TabNavigation = () => {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     
-    // Hide scroll hint after user interaction
     const hideHint = () => {
       setShowScrollHint(false);
     };
     
-    // Set a timer to hide the hint after 7 seconds
     const timer = setTimeout(() => {
       setShowScrollHint(false);
     }, 7000);
@@ -33,7 +30,6 @@ const TabNavigation = () => {
     };
   }, []);
   
-  // Handle scroll event
   const handleScroll = () => {
     setShowScrollHint(false);
   };
@@ -83,7 +79,6 @@ const TabNavigation = () => {
         </div>
       </div>
       
-      {/* Scroll hint - only visible on mobile */}
       {showScrollHint && isMobile && (
         <motion.div 
           className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10"

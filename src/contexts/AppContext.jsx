@@ -1,4 +1,3 @@
-// src/contexts/AppContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import {
     getSongsByAlbum,
@@ -14,28 +13,26 @@ const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
 
 export const AppProvider = ({ children }) => {
-    const [currentScreen, setCurrentScreen] = useState('loading'); // loading, profile, home, player
-    const [activeTab, setActiveTab] = useState('songs'); // songs, albums, artists, liked, playlists, filtered
+    const [currentScreen, setCurrentScreen] = useState('loading'); 
+    const [activeTab, setActiveTab] = useState('songs'); 
     const [isPlayerMinimized, setIsPlayerMinimized] = useState(true);
     const [showPlaylistModal, setShowPlaylistModal] = useState(false);
     const [selectedPlaylistForAdd, setSelectedPlaylistForAdd] = useState(null);
-    const [theme, setTheme] = useState('pastel'); // pastel, night, cozy, dark
+    const [theme, setTheme] = useState('pastel'); 
     const [filteredSongs, setFilteredSongs] = useState([]);
     const [filterTitle, setFilterTitle] = useState('');
-    const [filterType, setFilterType] = useState(''); // 'album', 'artist', 'playlist'
+    const [filterType, setFilterType] = useState(''); 
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [filterItemDetails, setFilterItemDetails] = useState(null); // For storing album/artist/playlist details
+    const [filterItemDetails, setFilterItemDetails] = useState(null); 
     const [userPlaylists, setUserPlaylists] = useState([]);
     const [lastPlaylistAction, setLastPlaylistAction] = useState({
-        type: null, // 'created', 'deleted', 'updated'
+        type: null, 
         playlistId: null,
         playlistName: null,
         timestamp: null
     });
 
-    // Load playlists on init
     useEffect(() => {
-        // Try to get saved playlists from localStorage
         const savedPlaylists = localStorage.getItem('userPlaylists');
         if (savedPlaylists) {
             try {
@@ -49,17 +46,14 @@ export const AppProvider = ({ children }) => {
             }
         }
 
-        // Fall back to default playlists
         setUserPlaylists(defaultPlaylists);
     }, []);
 
-    // Apply theme on change
     useEffect(() => {
         applyTheme(theme);
     }, [theme]);
 
     const applyTheme = (themeName) => {
-        // Set theme colors and styles
         const bodyEl = document.body;
 
         switch (themeName) {
@@ -75,7 +69,7 @@ export const AppProvider = ({ children }) => {
                 bodyEl.style.backgroundColor = '#0f0f17';
                 bodyEl.classList.add('dark-theme');
                 break;
-            default: // pastel
+            default: 
                 bodyEl.style.backgroundColor = '#fcf1f7';
                 bodyEl.classList.remove('dark-theme');
         }
@@ -87,13 +81,10 @@ export const AppProvider = ({ children }) => {
             return;
         }
 
-        // Normalize search query (lowercase for case-insensitive search)
         const searchTerm = query.toLowerCase().trim();
 
-        // Import from mockMusicData.js
         const { songs } = require('../../src/mockMusicData');
 
-        // Search across songs, albums, and artists
         const matchedSongs = songs.filter(song =>
             song.title.toLowerCase().includes(searchTerm) ||
             getArtistById(song.artist)?.name.toLowerCase().includes(searchTerm) ||
@@ -116,7 +107,6 @@ export const AppProvider = ({ children }) => {
 
     const switchTab = (tab) => {
         setActiveTab(tab);
-        // Clear any filtered content when switching tabs
         if (tab !== 'filtered') {
             setFilteredSongs([]);
             setFilterTitle('');
@@ -138,7 +128,6 @@ export const AppProvider = ({ children }) => {
     };
 
     const togglePlaylistModal = (songId = null) => {
-        // Always set both states to ensure consistency
         if (showPlaylistModal) {
             setShowPlaylistModal(false);
             setSelectedPlaylistForAdd(null);
@@ -176,9 +165,7 @@ export const AppProvider = ({ children }) => {
         setActiveTab('filtered');
     };
 
-    // Updated to get playlists from localStorage directly to ensure freshness
     const filterSongsByPlaylist = (playlistId) => {
-        // Get the latest playlists from localStorage
         let playlists = [];
         try {
             const storedPlaylists = localStorage.getItem('userPlaylists');
@@ -187,17 +174,15 @@ export const AppProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Error loading playlists:", error);
-            playlists = userPlaylists; // Fallback to state
+            playlists = userPlaylists; 
         }
 
-        // Find the playlist
         const playlist = playlists.find(p => p.id === playlistId);
 
         if (playlist) {
-            // Get the actual song objects from the IDs
             const playlistSongs = (playlist.songs || [])
                 .map(songId => getSongById(songId))
-                .filter(Boolean); // Filter out any undefined songs
+                .filter(Boolean); 
 
             setFilteredSongs(playlistSongs);
             setFilterTitle(playlist.title);
@@ -217,7 +202,6 @@ export const AppProvider = ({ children }) => {
         setActiveTab('songs');
     };
 
-    // New function to track playlist actions
     const trackPlaylistAction = (type, playlistId, playlistName) => {
         setLastPlaylistAction({
             type,

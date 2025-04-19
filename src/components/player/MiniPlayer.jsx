@@ -1,4 +1,3 @@
-// src/components/player/MiniPlayer.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { usePlayer } from '../../contexts/PlayerContext';
@@ -12,7 +11,6 @@ const MiniPlayer = () => {
   const { isSongLiked, toggleLikeSong } = useUser();
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detect mobile devices for optimization
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -64,7 +62,6 @@ const MiniPlayer = () => {
       </div>
 
       <div className="flex items-center">
-        {/* Album cover with larger tap target on mobile */}
         <div className="relative mr-3">
           <motion.div
             className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} rounded-lg overflow-hidden shadow-md`}
@@ -77,7 +74,6 @@ const MiniPlayer = () => {
               loading="lazy"
             />
             
-            {/* Simplified wave animation for mobile */}
             {isPlaying && (
               <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? 'h-2' : 'h-3'} bg-gradient-to-t from-black/50 to-transparent flex justify-center items-end py-0.5`}>
                 <div className="flex items-end space-x-0.5">
@@ -105,7 +101,6 @@ const MiniPlayer = () => {
           </motion.div>
         </div>
 
-        {/* Song info - simplified for mobile */}
         <div className="flex-grow min-w-0">
           <h3 className={`text-sm font-semibold truncate ${getTextColor()}`}>
             {currentSong.title}
@@ -115,16 +110,13 @@ const MiniPlayer = () => {
           </p>
         </div>
 
-        {/* Controls - more compact layout for mobile */}
         <div className="flex items-center">
-          {/* Time on desktop only */}
           {!isMobile && (
             <div className={`text-xs ${getSubTextColor()} mr-2 hidden sm:block`}>
               {formatTime(currentTime)}/{formatTime(duration)}
             </div>
           )}
           
-          {/* Like button */}
           <motion.button
             className={isMobile ? "p-1 mx-0.5" : "p-1.5 mx-1"}
             onClick={(e) => {
@@ -144,7 +136,6 @@ const MiniPlayer = () => {
             )}
           </motion.button>
           
-          {/* Play/Pause button - slightly larger on mobile for easier tapping */}
           <motion.button
             className={`${isMobile ? 'w-9 h-9' : 'w-10 h-10'} rounded-full bg-gradient-to-r from-pink-400 to-purple-500 text-white flex items-center justify-center shadow-md mx-1`}
             onClick={(e) => {
@@ -164,7 +155,6 @@ const MiniPlayer = () => {
             )}
           </motion.button>
           
-          {/* Maximize button for desktop only */}
           {!isMobile && (
             <motion.button
               className="p-1.5 hidden sm:block"

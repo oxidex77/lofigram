@@ -1,4 +1,3 @@
-// src/components/common/PlaylistCard.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../../contexts/AppContext';
@@ -9,7 +8,6 @@ const PlaylistCard = ({ playlist, onDelete }) => {
   const { filterSongsByPlaylist, theme } = useApp();
   
   const handleClick = () => {
-    // Add more robust error checking and logging
     if (!playlist) {
       console.error("No playlist provided to PlaylistCard");
       return;
@@ -20,29 +18,24 @@ const PlaylistCard = ({ playlist, onDelete }) => {
       return;
     }
     
-    // Ensure the playlist ID is valid and passed as a string
     const playlistId = String(playlist.id);
     console.log("Opening playlist:", playlistId, playlist.title);
     
-    // Add a small delay to ensure any state updates complete before navigation
     setTimeout(() => {
       filterSongsByPlaylist(playlistId);
     }, 10);
   };
 
-  // Safety check for null playlist
   if (!playlist) {
     console.error("Null playlist provided to PlaylistCard");
     return null;
   }
 
-  // Get number of songs in the playlist (with safety check)
   const songCount = playlist && playlist.songs ? playlist.songs.length : 0;
 
-  // Get total duration of the playlist
   const getDuration = () => {
     if (!playlist || !playlist.songs || !Array.isArray(playlist.songs)) {
-      return '0:00'; // Default return if no valid songs
+      return '0:00'; 
     }
     
     let totalMinutes = 0;
@@ -62,7 +55,6 @@ const PlaylistCard = ({ playlist, onDelete }) => {
       }
     });
 
-    // Convert excess seconds to minutes
     totalMinutes += Math.floor(totalSeconds / 60);
     totalSeconds = totalSeconds % 60;
 
@@ -91,7 +83,6 @@ const PlaylistCard = ({ playlist, onDelete }) => {
       whileTap={{ scale: 0.98 }}
       onClick={handleClick}
     >
-      {/* Playlist Cover */}
       <motion.div 
         className="w-14 h-14 rounded-lg overflow-hidden shadow-sm mr-3 flex-shrink-0"
         variants={albumCoverHover}
@@ -99,7 +90,7 @@ const PlaylistCard = ({ playlist, onDelete }) => {
         whileHover="hover"
       >
         <img 
-          src={playlist?.cover || '/assets/album-covers/playlist.jpeg'} // Default cover image
+          src={playlist?.cover || '/assets/music-covers/playlist.jpeg'} // Default cover image
           alt={playlist?.title || 'Playlist'} 
           className="w-full h-full object-cover"
         />
@@ -115,7 +106,6 @@ const PlaylistCard = ({ playlist, onDelete }) => {
         </p>
       </div>
       
-      {/* Options Button - Don't propagate click to parent */}
       {onDelete && (
         <motion.button
           className={`p-2 ${getSubTextColor()} hover:text-red-500`}
