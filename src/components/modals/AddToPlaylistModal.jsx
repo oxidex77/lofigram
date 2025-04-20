@@ -18,6 +18,26 @@ const AddToPlaylistModal = () => {
   const inputRef = useRef(null);
   const shouldCloseRef = useRef(false);
   const songRef = useRef(null);
+  const resizeTimeoutRef = useRef(null);
+  const menuLockRef = useRef(false);
+  const modalClosingRef = useRef(false);
+  const globalMenuStateRef = useRef(true); // Tracks if menu system is available
+  const modalRef = useRef(null); // Reference for the modal element
+
+  // Memoize checking if on mobile - optimize with cache
+  const checkMobile = useMemo(() => {
+    let lastResult = null;
+    let lastWidth = 0;
+
+    return () => {
+      const currentWidth = window.innerWidth;
+      if (lastWidth === currentWidth) return lastResult;
+
+      lastWidth = currentWidth;
+      lastResult = currentWidth < 768;
+      return lastResult;
+    };
+  }, []);
 
   // Get song info only once and store in ref to prevent re-renders
   useEffect(() => {
@@ -32,45 +52,73 @@ const AddToPlaylistModal = () => {
   useEffect(() => {
     const shouldRender = !!(songRef.current || feedbackState);
 
+    // Use RAF for smoother animations with better timing
     if (shouldRender) {
+      // Double RAF for more reliable animation timing
       requestAnimationFrame(() => {
-        setIsVisible(true);
+        requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
       });
     } else {
       setIsVisible(false);
     }
-  }, [feedbackState]);
+  }, [feedbackState, selectedPlaylistForAdd]);
 
-  // Handle resize with debounce for better performance
+  // Handle resize with improved debounce for better performance
   useEffect(() => {
-    const checkMobile = () => {
-      const isMobileView = window.innerWidth < 768;
-      if (isMobileView !== isMobile) {
-        setIsMobile(isMobileView);
-      }
-    };
-
-    checkMobile();
-
-    let timeoutId;
     const handleResize = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = setTimeout(checkMobile, 100);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+
+      // Use requestAnimationFrame to align with browser paint cycles
+      requestAnimationFrame(() => {
+        resizeTimeoutRef.current = setTimeout(() => {
+          const isMobileView = checkMobile();
+          if (isMobileView !== isMobile) {
+            setIsMobile(isMobileView);
+          }
+        }, 50); // Reduced debounce time for faster response
+      });
     };
 
-    window.addEventListener('resize', handleResize);
+    // Set initial mobile state
+    setIsMobile(checkMobile());
+
+    window.addEventListener('resize', handleResize, { passive: true });
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (timeoutId) clearTimeout(timeoutId);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
     };
-  }, [isMobile]);
+  }, [isMobile, checkMobile]);
 
   // Focus the input when create mode is active
   useEffect(() => {
     if (showCreateInput && inputRef.current) {
-      inputRef.current.focus();
+      const focusTimer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100); // Slightly increased delay to ensure animation completes
+      return () => clearTimeout(focusTimer);
     }
   }, [showCreateInput]);
+
+  // Apply CSS will-change optimization on mount
+  useEffect(() => {
+    // Apply hardware acceleration hints
+    if (modalRef.current) {
+      modalRef.current.style.willChange = 'transform, opacity';
+
+      // Remove hardware acceleration hints when not needed
+      return () => {
+        if (modalRef.current) {
+          modalRef.current.style.willChange = 'auto';
+        }
+      };
+    }
+  }, []);
 
   // Close modal safely without causing infinite loops
   useEffect(() => {
@@ -79,7 +127,47 @@ const AddToPlaylistModal = () => {
       shouldCloseRef.current = true;
       togglePlaylistModal(null);
     }
+
+    // Reset menu state when component mounts
+    globalMenuStateRef.current = true;
+
+    // Cleanup function
+    return () => {
+      // Reset menu state when component unmounts
+      modalClosingRef.current = false;
+      menuLockRef.current = false;
+      globalMenuStateRef.current = true;
+
+      // Signal menu system is available again on unmount
+      try {
+        document.dispatchEvent(new CustomEvent('menuAvailable', { detail: { forceReset: true } }));
+      } catch (e) {
+        console.error("Error dispatching menuAvailable event:", e);
+      }
+    };
   }, [feedbackState, togglePlaylistModal]);
+
+  // Enhanced event management with optimized handlers
+  const triggerMenuAvailable = () => {
+    // Set a timeout to ensure animations complete before allowing new menu actions
+    setTimeout(() => {
+      menuLockRef.current = false;
+      globalMenuStateRef.current = true;
+      try {
+        document.dispatchEvent(new CustomEvent('menuAvailable', { detail: { forceReset: true } }));
+      } catch (e) {
+        console.error("Error dispatching menuAvailable event:", e);
+      }
+    }, 100);
+  };
+
+  const triggerMenuClosed = () => {
+    try {
+      document.dispatchEvent(new CustomEvent('menuClosed'));
+    } catch (e) {
+      console.error("Error dispatching menuClosed event:", e);
+    }
+  };
 
   // Handle adding a song to a playlist
   const handleAddToPlaylist = async (playlistId) => {
@@ -87,25 +175,31 @@ const AddToPlaylistModal = () => {
     const playlist = userPlaylists.find(p => p.id === playlistId);
     if (!playlist) return;
 
+    // Set menu lock to prevent simultaneous actions
+    menuLockRef.current = true;
+    globalMenuStateRef.current = false;
+
     try {
       await addSongToPlaylist(playlistId, songRef.current.id);
 
       setFeedbackData({ name: playlist.title, songTitle: songRef.current.title });
       setFeedbackState('added');
 
-      // Add this line to clear stale event handlers
-      document.dispatchEvent(new CustomEvent('menuClosed'));
+      triggerMenuClosed();
 
+      // Use modalClosingRef to track modal closing state
+      modalClosingRef.current = true;
       setTimeout(() => {
         togglePlaylistModal(null);
         setTimeout(() => {
           setFeedbackState(null);
-          // Add this line to signal menu system is available again
-          document.dispatchEvent(new CustomEvent('menuAvailable'));
-        }, 500);
-      }, 1800);
+          modalClosingRef.current = false;
+          triggerMenuAvailable();
+        }, 300);
+      }, 1500);
     } catch (error) {
       console.error("Failed to add song:", error);
+      triggerMenuAvailable();
     }
   };
 
@@ -113,6 +207,10 @@ const AddToPlaylistModal = () => {
   const handleCreatePlaylist = async () => {
     const name = newPlaylistName.trim();
     if (!name || !songRef.current || feedbackState === 'creating') return;
+
+    // Set menu lock to prevent simultaneous actions
+    menuLockRef.current = true;
+    globalMenuStateRef.current = false;
 
     setFeedbackState('creating');
     setFeedbackData({ name: name, songTitle: songRef.current.title });
@@ -129,19 +227,23 @@ const AddToPlaylistModal = () => {
       setNewPlaylistName('');
       setFeedbackState('created');
 
-      // Add the same custom events in the timeout chain
+      triggerMenuClosed();
+
+      // Use modalClosingRef to track modal closing state
+      modalClosingRef.current = true;
       setTimeout(() => {
         togglePlaylistModal(null);
         setTimeout(() => {
           setFeedbackState(null);
-          // Add this line
-          document.dispatchEvent(new CustomEvent('menuAvailable'));
-        }, 500);
-      }, 2200);
+          modalClosingRef.current = false;
+          triggerMenuAvailable();
+        }, 300);
+      }, 1800);
     } catch (error) {
       console.error("Failed to create playlist and add song:", error);
       setFeedbackState(null);
       setShowCreateInput(true);
+      triggerMenuAvailable();
     }
   };
 
@@ -150,15 +252,21 @@ const AddToPlaylistModal = () => {
     setNewPlaylistName('');
   }
 
-  const handleCloseModal = () => {
-    if (feedbackState !== 'creating') {
-      document.dispatchEvent(new CustomEvent('menuClosed'));
+  const handleCloseModal = (e) => {
+    if (e) e.stopPropagation();
+
+    if (feedbackState !== 'creating' && !modalClosingRef.current) {
+      menuLockRef.current = true;
+      modalClosingRef.current = true;
+
+      triggerMenuClosed();
 
       togglePlaylistModal(null);
       setTimeout(() => {
         setFeedbackState(null);
-        document.dispatchEvent(new CustomEvent('menuAvailable'));
-      }, 500);
+        modalClosingRef.current = false;
+        triggerMenuAvailable();
+      }, 300);
     }
   }
 
@@ -166,7 +274,7 @@ const AddToPlaylistModal = () => {
     return {
       modalPosition: showCreateInput && isMobile
         ? "fixed bottom-0 sm:bottom-auto sm:top-1/3 left-0 right-0 max-h-[70vh] sm:max-h-[60vh]"
-        : "fixed bottom-0 left-0 right-0 max-h-[75vh] sm:max-h-[70vh]",
+        : "fixed bottom-0 sm:bottom-0 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:max-w-lg w-full max-h-[75vh] sm:max-h-[70vh] sm:rounded-t-3xl overflow-hidden",
 
       background: theme === 'night' || theme === 'dark'
         ? 'bg-gradient-to-b from-gray-800 to-gray-900 border-t border-gray-700'
@@ -207,17 +315,86 @@ const AddToPlaylistModal = () => {
     };
   }, [theme, showCreateInput, isMobile]);
 
-  // Optimized animations
+  // Enhanced backdrop animation - smoother transitions
   const optimizedBackdropAnimation = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.15, ease: 'easeOut' } },
-    exit: { opacity: 0, transition: { duration: 0.15, ease: 'easeIn' } }
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.22,
+        ease: [0.16, 1, 0.3, 1]
+      }
+    },
+    exit: {
+      opacity: 0,
+      transition: {
+        duration: 0.2,
+        ease: [0.4, 0, 0.2, 1]
+      }
+    }
   };
 
+  // Improved modal animation - smoother and more subtle
   const optimizedModalAnimation = {
-    hidden: { y: 50, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } },
-    exit: { y: 25, opacity: 0, transition: { duration: 0.15, ease: "easeIn" } }
+    hidden: {
+      y: 80,
+      opacity: 0,
+      scale: 0.98,
+    },
+    visible: {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: "spring",
+        damping: 24,
+        stiffness: 230,
+        mass: 1,
+        opacity: { duration: 0.25 },
+      }
+    },
+    exit: {
+      y: 20,
+      opacity: 0,
+      scale: 0.98,
+      transition: {
+        duration: 0.22,
+        ease: [0.32, 0, 0.67, 0]
+      }
+    }
+  };
+
+  // Refined list item animations - more subtle and performant
+  const listItemAnimation = {
+    hidden: { opacity: 0, y: 8 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: Math.min(i * 0.025, 0.15), // Cap the maximum delay
+        duration: 0.25,
+        ease: [0.2, 0.65, 0.3, 0.9]
+      }
+    })
+  };
+
+  // Gentle hover animation for playlist items - less dramatic
+  const playlistItemHover = {
+    rest: { scale: 1, y: 0 },
+    hover: {
+      scale: 1.015,
+      y: -1,
+      transition: {
+        duration: 0.15,
+        ease: "easeOut"
+      }
+    },
+    tap: {
+      scale: 0.985,
+      transition: {
+        duration: 0.1
+      }
+    }
   };
 
   // Safely get current song
@@ -228,7 +405,7 @@ const AddToPlaylistModal = () => {
     return null;
   }
 
-  // Render the feedback content
+  // Render the feedback content with optimized animations
   const renderFeedbackContent = () => {
     switch (feedbackState) {
       case 'creating':
@@ -257,16 +434,21 @@ const AddToPlaylistModal = () => {
           <motion.div
             key="created"
             className="flex flex-col items-center justify-center py-10 text-center"
-            initial={{ opacity: 0, scale: 0.7 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.4, ease: [0.17, 0.67, 0.83, 0.67] }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <motion.div
               className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center mb-4 shadow-lg"
-              initial={{ scale: 0, rotate: -90 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 150, damping: 10, delay: 0.1 }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{
+                type: "spring",
+                stiffness: 200,
+                damping: 15,
+                delay: 0.05
+              }}
             >
               <FaMusic className="w-7 h-7 text-white" />
             </motion.div>
@@ -279,16 +461,21 @@ const AddToPlaylistModal = () => {
           <motion.div
             key="added"
             className="flex flex-col items-center justify-center py-10 text-center"
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
             <motion.div
               className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center mb-4 shadow-md"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 180, damping: 12 }}
+              transition={{
+                type: "spring",
+                stiffness: 200,
+                damping: 15,
+                delay: 0.05
+              }}
             >
               <FaCheck className="w-7 h-7 text-white" />
             </motion.div>
@@ -309,6 +496,7 @@ const AddToPlaylistModal = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
+      className="h-full"
     >
       <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
         <h3 className={`text-xl font-bold ${styles.textColor('high')}`}>
@@ -325,7 +513,12 @@ const AddToPlaylistModal = () => {
 
       {/* Song Info */}
       {song && (
-        <div className="flex items-center space-x-3 mb-5 px-1">
+        <motion.div
+          className="flex items-center space-x-3 mb-5 px-1"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.05 }}
+        >
           <div className="w-14 h-14 rounded-lg overflow-hidden shadow-md flex-shrink-0 border border-black/10">
             <img
               src={song.cover}
@@ -338,27 +531,25 @@ const AddToPlaylistModal = () => {
             <h4 className={`font-medium truncate ${styles.textColor('high')}`}>{song.title}</h4>
             <p className={`text-sm truncate ${styles.subTextColor}`}>Select or create a playlist</p>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Playlist List OR Create Input */}
       <div className="max-h-[40vh] overflow-y-auto pr-1 space-y-2 mb-5 custom-scrollbar overscroll-contain">
         {!showCreateInput ? (
           <>
-            {/* Render playlists with a maximum delay cap */}
+            {/* Render playlists with staggered animation - less aggressive */}
             {userPlaylists.map((playlist, index) => (
               <motion.button
                 key={playlist.id}
-                layoutId={`playlist-${playlist.id}`}
+                custom={index}
+                variants={listItemAnimation}
+                initial="hidden"
+                animate="visible"
                 className={`flex items-center w-full p-3 ${styles.buttonBackground('default')} rounded-xl transition-colors`}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.015, y: -1, transition: { duration: 0.15, ease: "easeOut" } }}
+                whileTap={{ scale: 0.985, transition: { duration: 0.1 } }}
                 onClick={() => handleAddToPlaylist(playlist.id)}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.15,
-                  delay: Math.min(0.03 * index, 0.2),
-                }}
               >
                 {/* Playlist Cover/Icon */}
                 <div className={`w-10 h-10 rounded-lg overflow-hidden shadow-sm mr-3 flex-shrink-0 flex items-center justify-center ${theme === 'night' || theme === 'dark' ? 'bg-gray-700' : 'bg-purple-100'}`}>
@@ -381,16 +572,29 @@ const AddToPlaylistModal = () => {
               </motion.button>
             ))}
 
-            {/* Create New Button */}
+            {/* Create New Button - with enhanced animation */}
             <motion.button
-              layoutId="create-button"
               className={`w-full mt-3 py-3 px-4 ${styles.createButtonStyle} rounded-xl transition-all duration-150 flex items-center justify-center`}
               onClick={() => setShowCreateInput(true)}
-              whileHover={{ scale: 1.02, y: -1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                transition: {
+                  delay: Math.min(0.025 * userPlaylists.length, 0.15) + 0.05,
+                  duration: 0.3
+                }
+              }}
+              whileHover={{
+                scale: 1.02,
+                y: -1,
+                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.08)"
+              }}
               whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: Math.min(0.03 * userPlaylists.length, 0.2) + 0.1 }}
+              transition={{
+                duration: 0.15,
+                ease: "easeOut"
+              }}
             >
               <FaPlus className="w-4 h-4 mr-2" />
               Create New Playlist
@@ -399,28 +603,40 @@ const AddToPlaylistModal = () => {
         ) : (
           <motion.div
             key="createInput"
-            layoutId="create-input-container"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
+            transition={{ duration: 0.25, ease: [0.2, 1, 0.3, 1] }}
             className="space-y-3 pt-2"
           >
-            <input
-              ref={inputRef}
-              type="text"
-              value={newPlaylistName}
-              onChange={(e) => setNewPlaylistName(e.target.value)}
-              placeholder="Enter playlist name..."
-              className={`w-full px-4 py-3 rounded-xl border-2 ${styles.inputBackground} focus:outline-none focus:ring-2 ${styles.textColor('high')} placeholder-purple-400/70 dark:placeholder-gray-500 transition duration-150 ease-in-out`}
-              maxLength={50}
-            />
+            <motion.div
+              initial={{ y: 8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.25, delay: 0.05 }}
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                value={newPlaylistName}
+                onChange={(e) => setNewPlaylistName(e.target.value)}
+                placeholder="Enter playlist name..."
+                className={`w-full px-4 py-3 rounded-xl border-2 ${styles.inputBackground} focus:outline-none focus:ring-2 ${styles.textColor('high')} placeholder-purple-400/70 dark:placeholder-gray-500 transition duration-150 ease-in-out`}
+                maxLength={50}
+              />
+            </motion.div>
 
-            <div className="flex space-x-2">
+            <motion.div
+              className="flex space-x-2"
+              initial={{ y: 8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.25, delay: 0.1 }}
+            >
               <motion.button
                 className={`flex-1 py-3 px-4 ${styles.buttonBackground('secondary')} rounded-xl transition-colors font-medium`}
                 onClick={handleCancelCreate}
+                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.15 }}
               >
                 Cancel
               </motion.button>
@@ -428,7 +644,9 @@ const AddToPlaylistModal = () => {
               <motion.button
                 className={`flex-1 py-3 px-4 ${styles.buttonBackground('primary')} rounded-xl transition-opacity font-medium disabled:opacity-60 disabled:cursor-not-allowed`}
                 onClick={handleCreatePlaylist}
+                whileHover={{ scale: 1.02, filter: "brightness(1.03)" }}
                 whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.15 }}
                 disabled={!newPlaylistName.trim() || feedbackState === 'creating'}
               >
                 {feedbackState === 'creating' ? (
@@ -437,7 +655,7 @@ const AddToPlaylistModal = () => {
                   "Create & Add"
                 )}
               </motion.button>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </div>
@@ -446,18 +664,20 @@ const AddToPlaylistModal = () => {
 
   return (
     <>
-      {/* Backdrop with optimized animation */}
+      {/* Backdrop with enhanced animation */}
       <motion.div
-        className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-40"
         variants={optimizedBackdropAnimation}
         initial="hidden"
         animate="visible"
         exit="exit"
         onClick={handleCloseModal}
+        style={{ willChange: 'opacity' }}
       />
 
       <motion.div
-        className={`shadow-2xl ${styles.modalPosition} ${styles.background} will-change-transform rounded-t-3xl p-5 z-50 flex flex-col`}
+        ref={modalRef}
+        className={`shadow-2xl ${styles.modalPosition} ${styles.background} rounded-t-3xl p-5 z-50 flex flex-col`}
         variants={optimizedModalAnimation}
         initial="hidden"
         animate="visible"
